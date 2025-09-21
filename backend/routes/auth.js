@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const passport = require('passport');
 const User = require('../models/User');
-const { auth } = require('../middleware/auth');
+const { auth, refreshAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -359,7 +359,7 @@ router.delete('/account', auth, async (req, res) => {
 });
 
 // Refresh token
-router.post('/refresh', auth, async (req, res) => {
+router.post('/refresh', refreshAuth, async (req, res) => {
   try {
     const newToken = generateToken(req.user.id);
     

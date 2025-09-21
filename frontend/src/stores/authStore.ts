@@ -195,6 +195,11 @@ export const useAuthStore = create<AuthStore>()(
 
       refreshToken: async () => {
         try {
+          const state = get()
+          if (!state.token) {
+            throw new Error('No token to refresh')
+          }
+          
           const response = await axios.post('/auth/refresh')
           const { token } = response.data
           
@@ -225,13 +230,29 @@ axios.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Only retry if it's a 401 and we haven't already retried
+    // Also don't retry if this is already a refresh request to avoid infinite loops
+    if (error.response?.status === 401 && 
+        !originalRequest._retry && 
+        !originalRequest.url?.includes('/auth/refresh')) {
+      
       originalRequest._retry = true
       
       try {
-        await useAuthStore.getState().refreshToken()
-        return axios(originalRequest)
+        const authStore = useAuthStore.getState()
+        
+        // Check if we have a token to refresh
+        if (authStore.token) {
+          await authStore.refreshToken()
+          return axios(originalRequest)
+        } else {
+          // No token, logout and redirect
+          authStore.logout()
+          window.location.href = '/auth'
+          return Promise.reject(error)
+        }
       } catch (refreshError) {
+        // Refresh failed, logout and redirect
         useAuthStore.getState().logout()
         window.location.href = '/auth'
         return Promise.reject(refreshError)
