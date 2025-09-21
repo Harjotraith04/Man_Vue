@@ -1,0 +1,316 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-md;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Glass morphism effect */
+.glass {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Shopping bag animation */
+@keyframes bag-swing {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(10deg);
+  }
+  75% {
+    transform: rotate(-10deg);
+  }
+}
+
+.animate-bag-swing {
+  animation: bag-swing 2s ease-in-out infinite;
+}
+
+/* Loading spinner */
+.spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Custom button styles */
+.btn-primary {
+  @apply bg-black text-white px-6 py-3 rounded-md font-medium transition-all duration-200 hover:bg-gray-800 hover:shadow-lg transform hover:-translate-y-0.5;
+}
+
+.btn-secondary {
+  @apply bg-white text-black border border-gray-300 px-6 py-3 rounded-md font-medium transition-all duration-200 hover:bg-gray-50 hover:shadow-lg transform hover:-translate-y-0.5;
+}
+
+.btn-outline {
+  @apply border-2 border-black text-black px-6 py-3 rounded-md font-medium transition-all duration-200 hover:bg-black hover:text-white;
+}
+
+/* Card hover effects */
+.product-card {
+  @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-2;
+}
+
+/* Form styles */
+.form-input {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+/* Price tag styles */
+.price-original {
+  @apply line-through text-gray-500 text-sm;
+}
+
+.price-sale {
+  @apply text-red-600 font-bold text-lg;
+}
+
+.price-regular {
+  @apply text-black font-bold text-lg;
+}
+
+/* Badge styles */
+.badge-new {
+  @apply bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium;
+}
+
+.badge-sale {
+  @apply bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium;
+}
+
+.badge-bestseller {
+  @apply bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium;
+}
+
+/* Star rating */
+.star-filled {
+  @apply text-yellow-400;
+}
+
+.star-empty {
+  @apply text-gray-300;
+}
+
+/* Mobile-first responsive design helpers */
+.mobile-only {
+  @apply block md:hidden;
+}
+
+.desktop-only {
+  @apply hidden md:block;
+}
+
+/* AR/VR specific styles */
+model-viewer {
+  @apply w-full h-96 rounded-lg;
+}
+
+/* Voice recorder styles */
+.voice-recording {
+  @apply animate-pulse;
+}
+
+.voice-waveform {
+  @apply flex items-center space-x-1;
+}
+
+.voice-bar {
+  @apply w-1 bg-blue-500 rounded-full;
+  animation: voice-wave 1.2s ease-in-out infinite;
+}
+
+@keyframes voice-wave {
+  0%, 100% {
+    height: 8px;
+  }
+  50% {
+    height: 24px;
+  }
+}
+
+/* Chat styles */
+.chat-message {
+  @apply max-w-xs lg:max-w-md px-4 py-2 rounded-lg;
+}
+
+.chat-user {
+  @apply bg-blue-500 text-white ml-auto;
+}
+
+.chat-bot {
+  @apply bg-gray-200 text-gray-800;
+}
+
+/* Image comparison slider */
+.before-after-slider {
+  @apply relative overflow-hidden rounded-lg;
+}
+
+/* Size guide modal */
+.size-guide-table {
+  @apply w-full border-collapse;
+}
+
+.size-guide-table th,
+.size-guide-table td {
+  @apply border border-gray-300 px-4 py-2 text-sm;
+}
+
+.size-guide-table th {
+  @apply bg-gray-100 font-medium;
+}
+
+/* Wishlist heart animation */
+.heart-beat {
+  animation: heartbeat 1s ease-in-out;
+}
+
+@keyframes heartbeat {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Cart drawer styles */
+.cart-drawer {
+  @apply fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-300;
+}
+
+.cart-drawer.open {
+  @apply translate-x-0;
+}
+
+.cart-drawer.closed {
+  @apply translate-x-full;
+}
+
+/* Search overlay */
+.search-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 z-40;
+}
+
+/* Skeleton loading */
+.skeleton {
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
