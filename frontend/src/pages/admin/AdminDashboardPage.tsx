@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
@@ -12,17 +12,17 @@ import {
   BarChart3, 
   Settings,
   Plus,
-  TrendingUp,
   DollarSign,
   Eye,
   Download
 } from 'lucide-react'
 import axios from 'axios'
-import { formatPrice, formatDate } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import AdminProducts from '@/components/admin/AdminProducts'
 import AdminUsers from '@/components/admin/AdminUsers'
 import AdminOrders from '@/components/admin/AdminOrders'
 import AdminAnalytics from '@/components/admin/AdminAnalytics'
+import AdminSettings from '@/components/admin/AdminSettings'
 
 interface DashboardStats {
   orders: {
@@ -87,15 +87,30 @@ interface DashboardStats {
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const { user } = useAuthStore()
+  const { user, token, isAuthenticated, initialize } = useAuthStore()
   const location = useLocation()
 
   useEffect(() => {
-    fetchDashboardStats()
-  }, [])
+    // Initialize auth store first to ensure token is set in axios headers
+    initialize()
+  }, [initialize])
+
+  useEffect(() => {
+    // Only fetch stats if authenticated
+    if (isAuthenticated && token) {
+      fetchDashboardStats()
+    } else {
+      setIsLoading(false)
+    }
+  }, [isAuthenticated, token])
 
   const fetchDashboardStats = async () => {
     try {
+      // Ensure token is set in axios headers
+      if (token && !axios.defaults.headers.common['Authorization']) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      }
+      
       // Get current period stats
       const currentResponse = await axios.get('/admin/dashboard?period=30')
       // Get previous period stats for growth calculation
@@ -195,12 +210,12 @@ export default function AdminDashboardPage() {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <Routes>
-          <Route path="/" element={<DashboardOverview stats={stats} />} />
-          <Route path="/products" element={<AdminProducts />} />
-          <Route path="/users" element={<AdminUsers />} />
-          <Route path="/orders" element={<AdminOrders />} />
-          <Route path="/analytics" element={<AdminAnalytics />} />
-          <Route path="/settings" element={<AdminSettings />} />
+          <Route index element={<DashboardOverview stats={stats} />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Routes>
       </div>
     </div>
@@ -431,19 +446,6 @@ function DashboardOverview({ stats }: { stats: DashboardStats | null }) {
           </CardContent>
         </Card>
       </div>
-    </div>
-  )
-}
-
-function AdminSettings() {
-  return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Settings</h1>
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-gray-600">Settings panel coming soon...</p>
-        </CardContent>
-      </Card>
     </div>
   )
 }

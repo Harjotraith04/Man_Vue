@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useCartStore } from '@/stores/cartStore'
@@ -28,6 +28,7 @@ export default function Navbar() {
 
   const navigate = useNavigate()
   const location = useLocation()
+  const userMenuRef = useRef<HTMLDivElement>(null)
   
   const { user, isAuthenticated, logout } = useAuthStore()
   const { summary, toggleCart } = useCartStore()
@@ -71,6 +72,22 @@ export default function Navbar() {
   useEffect(() => {
     setIsMobileMenuOpen(false)
   }, [location.pathname])
+
+  // Handle click outside user dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [isUserMenuOpen])
 
   // Main categories for navigation
   const mainCategories = [
@@ -215,7 +232,7 @@ export default function Navbar() {
 
             {/* User Menu */}
             {isAuthenticated ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -235,7 +252,10 @@ export default function Navbar() {
 
                 {/* User Dropdown */}
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                  <div 
+                    className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="py-2">
                       <div className="px-4 py-2 border-b border-gray-100">
                         <p className="font-medium text-sm">{user?.name}</p>
@@ -244,8 +264,11 @@ export default function Navbar() {
                       
                       <Link
                         to="/profile"
-                        className="flex items-center px-4 py-2 text-sm hover:bg-gray-50"
-                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setIsUserMenuOpen(false)
+                        }}
                       >
                         <Settings className="h-4 w-4 mr-2" />
                         Profile & Settings
@@ -253,8 +276,11 @@ export default function Navbar() {
                       
                       <Link
                         to="/orders"
-                        className="flex items-center px-4 py-2 text-sm hover:bg-gray-50"
-                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setIsUserMenuOpen(false)
+                        }}
                       >
                         <Package className="h-4 w-4 mr-2" />
                         My Orders
@@ -263,8 +289,11 @@ export default function Navbar() {
                       {user?.role === 'admin' && (
                         <Link
                           to="/admin"
-                          className="flex items-center px-4 py-2 text-sm hover:bg-gray-50"
-                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center px-4 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setIsUserMenuOpen(false)
+                          }}
                         >
                           <Settings className="h-4 w-4 mr-2" />
                           Admin Dashboard
@@ -272,8 +301,11 @@ export default function Navbar() {
                       )}
                       
                       <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-50 text-red-600"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleLogout()
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-50 text-red-600 cursor-pointer"
                       >
                         <LogOut className="h-4 w-4 mr-2" />
                         Logout
