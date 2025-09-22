@@ -32,6 +32,12 @@ interface AnalyticsData {
     startDate: string
     endDate: string
   }
+  growth?: {
+    revenue: number
+    orders: number
+    users: number
+    products: number
+  }
 }
 
 export default function AdminAnalytics() {
@@ -56,8 +62,54 @@ export default function AdminAnalytics() {
         endDate: dateRange.endDate
       })
 
-      const response = await axios.get(`/admin/analytics?${params}`)
-      setAnalyticsData(response.data.data)
+      // Get current period data
+      const currentResponse = await axios.get(`/admin/analytics?${params}`)
+      
+      // Calculate previous period for comparison
+      const startDateObj = new Date(dateRange.startDate)
+      const endDateObj = new Date(dateRange.endDate)
+      const periodLength = endDateObj.getTime() - startDateObj.getTime()
+      
+      const previousEndDate = new Date(startDateObj.getTime())
+      const previousStartDate = new Date(startDateObj.getTime() - periodLength)
+      
+      const previousParams = new URLSearchParams({
+        metric: selectedMetric,
+        startDate: previousStartDate.toISOString().split('T')[0],
+        endDate: previousEndDate.toISOString().split('T')[0]
+      })
+
+      // Get previous period data for growth calculation
+      let previousResponse = null
+      try {
+        previousResponse = await axios.get(`/admin/analytics?${previousParams}`)
+      } catch (prevError) {
+        console.log('Previous period data not available')
+      }
+
+      const currentData = currentResponse.data.data
+      
+      // Calculate growth if previous data is available
+      if (previousResponse) {
+        const previousData = previousResponse.data.data
+        
+        const calculateGrowthFromArrays = (current: any[], previous: any[], field: string) => {
+          const currentSum = current.reduce((sum, item) => sum + (item[field] || 0), 0)
+          const previousSum = previous.reduce((sum, item) => sum + (item[field] || 0), 0)
+          
+          if (previousSum === 0) return currentSum > 0 ? 100 : 0
+          return ((currentSum - previousSum) / previousSum) * 100
+        }
+
+        currentData.growth = {
+          revenue: calculateGrowthFromArrays(currentData.analytics, previousData.analytics, 'revenue'),
+          orders: calculateGrowthFromArrays(currentData.analytics, previousData.analytics, 'orders'),
+          users: calculateGrowthFromArrays(currentData.analytics, previousData.analytics, 'newUsers'),
+          products: calculateGrowthFromArrays(currentData.analytics, previousData.analytics, 'newProducts')
+        }
+      }
+
+      setAnalyticsData(currentData)
     } catch (error) {
       console.error('Failed to fetch analytics:', error)
       toast.error('Failed to load analytics')
@@ -185,9 +237,9 @@ export default function AdminAnalytics() {
                 <p className="text-2xl font-bold text-gray-900">
                   {formatPrice(summaryStats?.totalRevenue || 0)}
                 </p>
-                <p className="text-sm text-green-600">
+                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.revenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   <TrendingUp className="inline h-3 w-3 mr-1" />
-                  +12.5%
+                  {analyticsData?.growth ? `${analyticsData.growth.revenue >= 0 ? '+' : ''}${analyticsData.growth.revenue.toFixed(1)}%` : 'N/A'}
                 </p>
               </div>
               <div className="h-12 w-12 bg-green-50 rounded-lg flex items-center justify-center">
@@ -205,9 +257,9 @@ export default function AdminAnalytics() {
                 <p className="text-2xl font-bold text-gray-900">
                   {summaryStats?.totalOrders || 0}
                 </p>
-                <p className="text-sm text-blue-600">
+                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.orders >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   <TrendingUp className="inline h-3 w-3 mr-1" />
-                  +8.2%
+                  {analyticsData?.growth ? `${analyticsData.growth.orders >= 0 ? '+' : ''}${analyticsData.growth.orders.toFixed(1)}%` : 'N/A'}
                 </p>
               </div>
               <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center">
@@ -225,9 +277,9 @@ export default function AdminAnalytics() {
                 <p className="text-2xl font-bold text-gray-900">
                   {summaryStats?.totalUsers || 0}
                 </p>
-                <p className="text-sm text-purple-600">
+                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.users >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   <TrendingUp className="inline h-3 w-3 mr-1" />
-                  +15.3%
+                  {analyticsData?.growth ? `${analyticsData.growth.users >= 0 ? '+' : ''}${analyticsData.growth.users.toFixed(1)}%` : 'N/A'}
                 </p>
               </div>
               <div className="h-12 w-12 bg-purple-50 rounded-lg flex items-center justify-center">
@@ -245,9 +297,9 @@ export default function AdminAnalytics() {
                 <p className="text-2xl font-bold text-gray-900">
                   {summaryStats?.totalProducts || 0}
                 </p>
-                <p className="text-sm text-orange-600">
+                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.products >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   <TrendingUp className="inline h-3 w-3 mr-1" />
-                  +2.1%
+                  {analyticsData?.growth ? `${analyticsData.growth.products >= 0 ? '+' : ''}${analyticsData.growth.products.toFixed(1)}%` : 'N/A'}
                 </p>
               </div>
               <div className="h-12 w-12 bg-orange-50 rounded-lg flex items-center justify-center">
@@ -324,9 +376,14 @@ export default function AdminAnalytics() {
                 <span className="text-sm font-medium">Revenue Growth</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-32 bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '75%' }}></div>
+                    <div 
+                      className={`h-2 rounded-full ${analyticsData?.growth && analyticsData.growth.revenue >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                      style={{ width: `${Math.min(Math.abs(analyticsData?.growth?.revenue || 0), 100)}%` }}
+                    ></div>
                   </div>
-                  <span className="text-sm text-green-600">+12.5%</span>
+                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.revenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {analyticsData?.growth ? `${analyticsData.growth.revenue >= 0 ? '+' : ''}${analyticsData.growth.revenue.toFixed(1)}%` : 'N/A'}
+                  </span>
                 </div>
               </div>
               
@@ -334,9 +391,14 @@ export default function AdminAnalytics() {
                 <span className="text-sm font-medium">Order Growth</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-32 bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '60%' }}></div>
+                    <div 
+                      className={`h-2 rounded-full ${analyticsData?.growth && analyticsData.growth.orders >= 0 ? 'bg-blue-500' : 'bg-red-500'}`}
+                      style={{ width: `${Math.min(Math.abs(analyticsData?.growth?.orders || 0), 100)}%` }}
+                    ></div>
                   </div>
-                  <span className="text-sm text-blue-600">+8.2%</span>
+                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.orders >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                    {analyticsData?.growth ? `${analyticsData.growth.orders >= 0 ? '+' : ''}${analyticsData.growth.orders.toFixed(1)}%` : 'N/A'}
+                  </span>
                 </div>
               </div>
               
@@ -344,9 +406,14 @@ export default function AdminAnalytics() {
                 <span className="text-sm font-medium">User Growth</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-32 bg-gray-200 rounded-full h-2">
-                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: '85%' }}></div>
+                    <div 
+                      className={`h-2 rounded-full ${analyticsData?.growth && analyticsData.growth.users >= 0 ? 'bg-purple-500' : 'bg-red-500'}`}
+                      style={{ width: `${Math.min(Math.abs(analyticsData?.growth?.users || 0), 100)}%` }}
+                    ></div>
                   </div>
-                  <span className="text-sm text-purple-600">+15.3%</span>
+                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.users >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                    {analyticsData?.growth ? `${analyticsData.growth.users >= 0 ? '+' : ''}${analyticsData.growth.users.toFixed(1)}%` : 'N/A'}
+                  </span>
                 </div>
               </div>
               
@@ -354,9 +421,14 @@ export default function AdminAnalytics() {
                 <span className="text-sm font-medium">Product Growth</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-32 bg-gray-200 rounded-full h-2">
-                    <div className="bg-orange-500 h-2 rounded-full" style={{ width: '20%' }}></div>
+                    <div 
+                      className={`h-2 rounded-full ${analyticsData?.growth && analyticsData.growth.products >= 0 ? 'bg-orange-500' : 'bg-red-500'}`}
+                      style={{ width: `${Math.min(Math.abs(analyticsData?.growth?.products || 0), 100)}%` }}
+                    ></div>
                   </div>
-                  <span className="text-sm text-orange-600">+2.1%</span>
+                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.products >= 0 ? 'text-orange-600' : 'text-red-600'}`}>
+                    {analyticsData?.growth ? `${analyticsData.growth.products >= 0 ? '+' : ''}${analyticsData.growth.products.toFixed(1)}%` : 'N/A'}
+                  </span>
                 </div>
               </div>
             </div>

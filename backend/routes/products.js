@@ -2,7 +2,7 @@ const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const Product = require('../models/Product');
 const { auth, adminAuth, optionalAuth } = require('../middleware/auth');
-const cloudinary = require('../config/cloudinary');
+const { cloudinary } = require('../config/cloudinary');
 const multer = require('multer');
 
 const router = express.Router();
@@ -168,6 +168,7 @@ router.post('/', [
   body('brand.name').trim().notEmpty().withMessage('Brand name is required')
 ], async (req, res) => {
   try {
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -177,19 +178,56 @@ router.post('/', [
       });
     }
 
+    // Reconstruct nested objects from flat FormData fields
     const productData = {
       ...req.body,
       createdBy: req.user.id,
+      isActive: true, // Explicitly ensure product is active when created by admin
+      
+      // Reconstruct price object from flat fields
+      price: {
+        original: parseFloat(req.body['price.original']) || 0,
+        selling: parseFloat(req.body['price.selling']) || 0,
+        currency: 'INR'
+      },
+      
+      // Reconstruct brand object from flat fields  
+      brand: {
+        name: req.body['brand.name'] || '',
+        logo: req.body['brand.logo'] || ''
+      },
+      
+      // Reconstruct discount object from flat fields
+      discount: {
+        percentage: parseFloat(req.body['discount.percentage']) || 0,
+        isActive: req.body['discount.isActive'] === 'true',
+        validUntil: null
+      },
+      
+      // Parse JSON fields
       variants: JSON.parse(req.body.variants || '[]'),
       specifications: JSON.parse(req.body.specifications || '{}'),
       tags: JSON.parse(req.body.tags || '[]'),
       features: JSON.parse(req.body.features || '[]')
     };
+    
+    // Remove the flat fields to avoid duplication
+    delete productData['price.original'];
+    delete productData['price.selling'];
+    delete productData['brand.name'];
+    delete productData['brand.logo'];
+    delete productData['discount.percentage'];
+    delete productData['discount.isActive'];
 
     // Upload images to Cloudinary
     if (req.files && req.files.length > 0) {
       const imagePromises = req.files.map(file => {
         return new Promise((resolve, reject) => {
+          if (!file.buffer) {
+            reject(new Error('File buffer is missing'));
+            return;
+          }
+
           cloudinary.uploader.upload_stream(
             {
               folder: 'manvue/products',
@@ -198,12 +236,15 @@ router.post('/', [
               ]
             },
             (error, result) => {
-              if (error) reject(error);
-              else resolve({
-                url: result.secure_url,
-                alt: productData.title,
-                isPrimary: false
-              });
+              if (error) {
+                reject(error);
+              } else {
+                resolve({
+                  url: result.secure_url,
+                  alt: productData.title,
+                  isPrimary: false
+                });
+              }
             }
           ).end(file.buffer);
         });
@@ -219,6 +260,14 @@ router.post('/', [
       // Add images to first variant or create default variant
       if (productData.variants.length > 0) {
         productData.variants[0].images = uploadedImages;
+        // Ensure variant sizes have proper prices if they're 0
+        productData.variants.forEach(variant => {
+          variant.sizes.forEach(size => {
+            if (size.price === 0) {
+              size.price = productData.price.selling;
+            }
+          });
+        });
       } else {
         productData.variants = [{
           color: 'Default',
@@ -229,10 +278,32 @@ router.post('/', [
           ]
         }];
       }
+    } else {
+      // No images uploaded, but still need to fix variant prices
+      if (productData.variants.length > 0) {
+        productData.variants.forEach(variant => {
+          variant.sizes.forEach(size => {
+            if (size.price === 0) {
+              size.price = productData.price.selling;
+            }
+          });
+        });
+      }
+    }
+
+
+    // Generate slug from title if not provided
+    if (!productData.slug) {
+      productData.slug = productData.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 50);
     }
 
     const product = new Product(productData);
     await product.save();
+
 
     res.status(201).json({
       success: true,

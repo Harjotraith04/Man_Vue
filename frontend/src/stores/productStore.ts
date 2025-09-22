@@ -145,6 +145,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       const response = await axios.get(`/products?${params}`)
       const { products, pagination } = response.data.data
 
+
       set({
         products,
         pagination,

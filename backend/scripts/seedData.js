@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Product = require('../models/Product');
+const Order = require('../models/Order');
 
 // Sample data
 const sampleUsers = [
@@ -12,6 +13,21 @@ const sampleUsers = [
     passwordHash: 'admin123',
     role: 'admin',
     isEmailVerified: true
+  },
+  {
+    name: 'Harjot Singh',
+    email: 'harjots.raith@gmail.com',
+    googleId: 'google_harjot_123',
+    role: 'user',
+    isEmailVerified: true,
+    preferences: {
+      favoriteCategories: ['shirts', 'jeans', 'jackets'],
+      sizePreferences: {
+        shirt: 'L',
+        pants: '32',
+        shoes: '9'
+      }
+    }
   },
   {
     name: 'John Doe',
@@ -250,6 +266,136 @@ const sampleProducts = [
   }
 ];
 
+// Function to generate sample orders
+function generateSampleOrders(users, products) {
+  const customerUser = users.find(u => u.role === 'user');
+  const sampleOrders = [];
+  
+  // Generate orders for the last 60 days
+  const now = new Date();
+  for (let i = 0; i < 25; i++) {
+    const daysAgo = Math.floor(Math.random() * 60);
+    const orderDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    
+    // Randomly select 1-3 products for each order
+    const numItems = Math.floor(Math.random() * 3) + 1;
+    const selectedProducts = [];
+    for (let j = 0; j < numItems; j++) {
+      const product = products[Math.floor(Math.random() * products.length)];
+      const variant = product.variants[0];
+      const size = variant.sizes[Math.floor(Math.random() * variant.sizes.length)];
+      
+      selectedProducts.push({
+        product: product._id,
+        title: product.title,
+        image: variant.images[0].url,
+        quantity: Math.floor(Math.random() * 2) + 1,
+        size: size.size,
+        color: variant.color,
+        price: size.price,
+        totalPrice: size.price * (Math.floor(Math.random() * 2) + 1)
+      });
+    }
+    
+    const subtotal = selectedProducts.reduce((sum, item) => sum + item.totalPrice, 0);
+    const tax = Math.round(subtotal * 0.18); // 18% GST
+    const shipping = subtotal > 1000 ? 0 : 50; // Free shipping above ₹1000
+    const total = subtotal + tax + shipping;
+    
+    // Assign random status based on order age
+    let status;
+    if (daysAgo < 1) status = 'pending';
+    else if (daysAgo < 3) status = 'confirmed';
+    else if (daysAgo < 7) status = 'processing';
+    else if (daysAgo < 14) status = 'shipped';
+    else if (daysAgo < 45) status = 'delivered';
+    else status = Math.random() > 0.9 ? 'cancelled' : 'delivered';
+    
+    const orderNumber = `ORD${Date.now().toString().slice(-6)}${i.toString().padStart(3, '0')}`;
+    
+    sampleOrders.push({
+      orderNumber,
+      user: customerUser._id,
+      items: selectedProducts,
+      pricing: {
+        subtotal,
+        discount: 0,
+        tax,
+        shipping,
+        total
+      },
+      shippingAddress: {
+        name: customerUser.name,
+        phone: '+91 9876543210',
+        email: customerUser.email,
+        street: '123 Sample Street',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        zipCode: '400001',
+        country: 'India'
+      },
+      billingAddress: {
+        name: customerUser.name,
+        phone: '+91 9876543210',
+        email: customerUser.email,
+        street: '123 Sample Street',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        zipCode: '400001',
+        country: 'India'
+      },
+      payment: {
+        method: ['card', 'upi', 'netbanking'][Math.floor(Math.random() * 3)],
+        status: status === 'cancelled' ? 'failed' : 'completed',
+        transactionId: `TXN${Date.now().toString().slice(-8)}`,
+        paymentGateway: 'razorpay',
+        amountPaid: total,
+        currency: 'INR',
+        paidAt: status !== 'cancelled' ? orderDate : undefined
+      },
+      shipping: {
+        method: 'standard',
+        provider: 'bluedart',
+        trackingNumber: status === 'shipped' || status === 'delivered' ? `BLU${Date.now().toString().slice(-8)}` : '',
+        estimatedDelivery: new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000),
+        actualDelivery: status === 'delivered' ? new Date(orderDate.getTime() + Math.random() * 7 * 24 * 60 * 60 * 1000) : undefined,
+        cost: shipping
+      },
+      status,
+      tracking: [
+        {
+          status: 'order_placed',
+          message: 'Order has been placed successfully',
+          timestamp: orderDate
+        },
+        ...(status !== 'pending' ? [{
+          status: 'confirmed',
+          message: 'Order confirmed and being processed',
+          timestamp: new Date(orderDate.getTime() + 2 * 60 * 60 * 1000)
+        }] : []),
+        ...(status === 'shipped' || status === 'delivered' ? [{
+          status: 'shipped',
+          message: 'Order has been shipped',
+          timestamp: new Date(orderDate.getTime() + 3 * 24 * 60 * 60 * 1000)
+        }] : []),
+        ...(status === 'delivered' ? [{
+          status: 'delivered',
+          message: 'Order delivered successfully',
+          timestamp: new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000)
+        }] : [])
+      ],
+      notes: {
+        customer: '',
+        admin: ''
+      },
+      createdAt: orderDate,
+      updatedAt: orderDate
+    });
+  }
+  
+  return sampleOrders;
+}
+
 async function seedDatabase() {
   try {
     // Connect to MongoDB
@@ -259,16 +405,24 @@ async function seedDatabase() {
     // Clear existing data
     await User.deleteMany({});
     await Product.deleteMany({});
+    await Order.deleteMany({});
     console.log('🧹 Cleared existing data');
 
     // Seed Users
     const users = [];
     for (const userData of sampleUsers) {
-      const hashedPassword = await bcrypt.hash(userData.passwordHash, 12);
-      users.push({
-        ...userData,
-        passwordHash: hashedPassword
-      });
+      if (userData.passwordHash) {
+        const hashedPassword = await bcrypt.hash(userData.passwordHash, 12);
+        users.push({
+          ...userData,
+          passwordHash: hashedPassword
+        });
+      } else {
+        // For users without password (like Google users)
+        users.push({
+          ...userData
+        });
+      }
     }
     
     const createdUsers = await User.insertMany(users);
@@ -287,15 +441,25 @@ async function seedDatabase() {
     const createdProducts = await Product.insertMany(products);
     console.log(`🛍️ Created ${createdProducts.length} products`);
 
+    // Seed Orders
+    const sampleOrdersData = generateSampleOrders(createdUsers, createdProducts);
+    const createdOrders = await Order.insertMany(sampleOrdersData);
+    console.log(`📦 Created ${createdOrders.length} orders`);
+
+    // Calculate total revenue for summary
+    const totalRevenue = createdOrders.reduce((sum, order) => sum + order.pricing.total, 0);
+
     console.log('\n✅ Database seeded successfully!');
     console.log('\n📊 Sample Data Summary:');
     console.log(`   👤 Admin User: admin@manvue.com (password: admin123)`);
     console.log(`   👤 Test User: john@example.com (password: password123)`);
     console.log(`   🛍️ Products: ${createdProducts.length} sample products`);
-    console.log(`   💰 Price Range: ₹699 - ₹9,999`);
+    console.log(`   📦 Orders: ${createdOrders.length} sample orders`);
+    console.log(`   💰 Total Revenue: ₹${totalRevenue.toLocaleString('en-IN')}`);
     console.log(`   🏷️ Categories: shirts, jeans, jackets, tshirts, formal-shoes`);
+    console.log(`   📈 Order Statuses: pending, confirmed, processing, shipped, delivered`);
     
-    console.log('\n🚀 You can now start shopping on Manvue!');
+    console.log('\n🚀 You can now start using the admin dashboard with real data!');
 
   } catch (error) {
     console.error('❌ Seeding failed:', error);
@@ -310,4 +474,4 @@ if (require.main === module) {
   seedDatabase();
 }
 
-module.exports = { seedDatabase, sampleUsers, sampleProducts };
+module.exports = { seedDatabase, sampleUsers, sampleProducts, generateSampleOrders };

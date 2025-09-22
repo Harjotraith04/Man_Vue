@@ -10,9 +10,12 @@ const router = express.Router();
 // Dashboard overview stats
 router.get('/dashboard', adminAuth, async (req, res) => {
   try {
-    const { period = '30' } = req.query; // days
-    const startDate = new Date(Date.now() - parseInt(period) * 24 * 60 * 60 * 1000);
-    const endDate = new Date();
+    const { period = '30', offset = '0' } = req.query; // days
+    const periodDays = parseInt(period);
+    const offsetDays = parseInt(offset);
+    
+    const endDate = new Date(Date.now() - offsetDays * 24 * 60 * 60 * 1000);
+    const startDate = new Date(endDate.getTime() - periodDays * 24 * 60 * 60 * 1000);
 
     // Get stats for the period
     const [orderStats, userStats, productStats, revenueStats] = await Promise.all([
@@ -490,6 +493,73 @@ router.put('/products/bulk', [
 
   } catch (error) {
     console.error('Bulk update products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Order management - get all orders
+router.get('/orders', [
+  adminAuth,
+  query('page').optional().isInt({ min: 1 }),
+  query('limit').optional().isInt({ min: 1, max: 100 }),
+  query('status').optional().isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'])
+], async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      status,
+      search,
+      startDate,
+      endDate
+    } = req.query;
+
+    const query = {};
+    if (status) query.status = status;
+    
+    if (search) {
+      query.$or = [
+        { orderNumber: new RegExp(search, 'i') },
+        { 'user.name': new RegExp(search, 'i') },
+        { 'user.email': new RegExp(search, 'i') }
+      ];
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) query.createdAt.$lte = new Date(endDate);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const orders = await Order.find(query)
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Order.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: {
+        orders,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          totalOrders: total,
+          hasNext: page * limit < total,
+          hasPrev: page > 1
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get admin orders error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

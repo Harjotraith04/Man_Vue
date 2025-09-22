@@ -206,7 +206,9 @@ const productSchema = new mongoose.Schema({
     ref: 'User'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true }, // Include virtual fields in JSON output
+  toObject: { virtuals: true }
 });
 
 // Indexes for better performance

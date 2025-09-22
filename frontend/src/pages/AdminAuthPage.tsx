@@ -73,6 +73,16 @@ export default function AdminAuthPage() {
     }
   }
 
+  const handleAutoFillCredentials = () => {
+    setLoginForm({
+      email: 'admin@manvue.com',
+      password: 'admin123'
+    })
+    // Clear any existing errors
+    setErrors({})
+    toast.success('Admin credentials filled in')
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -141,6 +151,16 @@ export default function AdminAuthPage() {
                   </div>
                 </div>
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-dashed border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                onClick={handleAutoFillCredentials}
+                disabled={isLoading}
+              >
+                🔑 Fill Test Admin Credentials
+              </Button>
 
               <Button
                 type="submit"

@@ -76,6 +76,12 @@ interface DashboardStats {
     user: { name: string; email: string }
     shippingAddress: { name: string }
   }>
+  growth?: {
+    revenue: number
+    orders: number
+    users: number
+    products: number
+  }
 }
 
 export default function AdminDashboardPage() {
@@ -90,10 +96,40 @@ export default function AdminDashboardPage() {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await axios.get('/admin/dashboard')
-      setStats(response.data.data)
+      // Get current period stats
+      const currentResponse = await axios.get('/admin/dashboard?period=30')
+      // Get previous period stats for growth calculation
+      const previousResponse = await axios.get('/admin/dashboard?period=30&offset=30')
+      
+      const currentStats = currentResponse.data.data
+      const previousStats = previousResponse.data.data
+      
+      // Calculate growth percentages
+      const calculateGrowth = (current: number, previous: number) => {
+        if (previous === 0) return current > 0 ? 100 : 0
+        return ((current - previous) / previous) * 100
+      }
+      
+      const statsWithGrowth = {
+        ...currentStats,
+        growth: {
+          revenue: calculateGrowth(currentStats.orders.totalRevenue, previousStats.orders.totalRevenue),
+          orders: calculateGrowth(currentStats.orders.totalOrders, previousStats.orders.totalOrders),
+          users: calculateGrowth(currentStats.users.activeUsers, previousStats.users.activeUsers),
+          products: calculateGrowth(currentStats.products.activeProducts, previousStats.products.activeProducts)
+        }
+      }
+      
+      setStats(statsWithGrowth)
     } catch (error) {
       console.error('Failed to fetch dashboard stats:', error)
+      // Fallback to current period only if previous period fails
+      try {
+        const response = await axios.get('/admin/dashboard')
+        setStats(response.data.data)
+      } catch (fallbackError) {
+        console.error('Fallback request also failed:', fallbackError)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -174,33 +210,38 @@ export default function AdminDashboardPage() {
 function DashboardOverview({ stats }: { stats: DashboardStats | null }) {
   if (!stats) return null
 
+  const formatGrowth = (growth: number) => {
+    const sign = growth >= 0 ? '+' : ''
+    return `${sign}${growth.toFixed(1)}%`
+  }
+
   const statCards = [
     {
       title: 'Total Revenue',
       value: formatPrice(stats.orders.totalRevenue),
-      change: '+12.5%',
-      changeType: 'positive' as const,
+      change: stats.growth ? formatGrowth(stats.growth.revenue) : 'N/A',
+      changeType: stats.growth && stats.growth.revenue >= 0 ? 'positive' as const : 'negative' as const,
       icon: DollarSign
     },
     {
       title: 'Total Orders',
       value: stats.orders.totalOrders.toString(),
-      change: '+8.2%',
-      changeType: 'positive' as const,
+      change: stats.growth ? formatGrowth(stats.growth.orders) : 'N/A',
+      changeType: stats.growth && stats.growth.orders >= 0 ? 'positive' as const : 'negative' as const,
       icon: ShoppingCart
     },
     {
       title: 'Active Users',
       value: stats.users.activeUsers.toString(),
-      change: '+15.3%',
-      changeType: 'positive' as const,
+      change: stats.growth ? formatGrowth(stats.growth.users) : 'N/A',
+      changeType: stats.growth && stats.growth.users >= 0 ? 'positive' as const : 'negative' as const,
       icon: Users
     },
     {
       title: 'Active Products',
       value: stats.products.activeProducts.toString(),
-      change: '+2.1%',
-      changeType: 'positive' as const,
+      change: stats.growth ? formatGrowth(stats.growth.products) : 'N/A',
+      changeType: stats.growth && stats.growth.products >= 0 ? 'positive' as const : 'negative' as const,
       icon: Package
     }
   ]
@@ -223,7 +264,7 @@ function DashboardOverview({ stats }: { stats: DashboardStats | null }) {
                   <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                   <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                   <p className={`text-sm ${stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.change} from last month
+                    {stat.change} from last period
                   </p>
                 </div>
                 <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center">

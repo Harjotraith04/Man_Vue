@@ -208,7 +208,20 @@ export default function AddProduct({ onClose, onSuccess }: AddProductProps) {
       // Add basic product data
       Object.entries(form).forEach(([key, value]) => {
         if (typeof value === 'object' && value !== null) {
-          formData.append(key, JSON.stringify(value))
+          // Handle nested objects properly for validation
+          if (key === 'price') {
+            formData.append('price.original', value.original.toString())
+            formData.append('price.selling', value.selling.toString())
+          } else if (key === 'brand') {
+            formData.append('brand.name', value.name)
+            formData.append('brand.logo', value.logo || '')
+          } else if (key === 'discount') {
+            formData.append('discount.percentage', value.percentage.toString())
+            formData.append('discount.isActive', value.isActive.toString())
+          } else {
+            // For other objects, use JSON stringify
+            formData.append(key, JSON.stringify(value))
+          }
         } else {
           formData.append(key, value.toString())
         }
@@ -222,6 +235,7 @@ export default function AddProduct({ onClose, onSuccess }: AddProductProps) {
         formData.append('images', image)
       })
 
+
       const response = await axios.post('/products', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -233,8 +247,15 @@ export default function AddProduct({ onClose, onSuccess }: AddProductProps) {
       onClose()
     } catch (error: any) {
       console.error('Failed to create product:', error)
-      const message = error.response?.data?.message || 'Failed to create product'
-      toast.error(message)
+      
+      if (error.response?.data?.errors) {
+        // Show specific validation errors
+        const validationErrors = error.response.data.errors.map((err: any) => err.msg).join(', ')
+        toast.error(`Validation errors: ${validationErrors}`)
+      } else {
+        const message = error.response?.data?.message || 'Failed to create product'
+        toast.error(message)
+      }
     } finally {
       setIsLoading(false)
     }
