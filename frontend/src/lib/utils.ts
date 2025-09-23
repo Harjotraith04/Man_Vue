@@ -5,11 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatPrice(price: number | undefined | null, currency: string = '₹'): string {
+export function formatPrice(price: number | undefined | null, currency: string = '£'): string {
   if (price === undefined || price === null || isNaN(price)) {
     return `${currency}0`
   }
-  return `${currency}${price.toLocaleString('en-IN')}`
+  return `${currency}${price.toLocaleString('en-GB')}`
 }
 
 export function formatDiscountPercentage(original: number, selling: number): number {

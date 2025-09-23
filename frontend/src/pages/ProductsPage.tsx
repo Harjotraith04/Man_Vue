@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useProductStore } from '@/stores/productStore'
+import { useCartStore } from '@/stores/cartStore'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import ProductDetailModal from '@/components/ui/ProductDetailModal'
 import { Star, Filter, Grid, List, ChevronDown } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { products, isLoading, fetchProducts } = useProductStore()
+  const { addToCart, addToWishlist } = useCartStore()
   
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -78,10 +83,31 @@ export default function ProductsPage() {
     })
   }
 
+  const handleProductClick = (product: any) => {
+    setSelectedProduct(product)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedProduct(null)
+  }
+
+  const handleAddToCart = (product: any, quantity: number) => {
+    addToCart(product, quantity)
+  }
+
+  const handleAddToWishlist = (product: any) => {
+    addToWishlist(product)
+  }
+
   const ProductCard = ({ product }: { product: any }) => (
-    <Link to={`/product/${product.slug}`} className="group">
-      <Card className="overflow-hidden hover:shadow-lg transition-all duration-300">
-        <div className="relative aspect-square">
+    <div className="group">
+      <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer">
+        <div 
+          className="relative aspect-square"
+          onClick={() => handleProductClick(product)}
+        >
           <img
             src={product.primaryImage || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop'}
             alt={product.title}
@@ -97,6 +123,20 @@ export default function ProductsPage() {
               Featured
             </Badge>
           )}
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <Button 
+                size="sm" 
+                className="bg-white text-black hover:bg-gray-100 shadow-lg"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleProductClick(product)
+                }}
+              >
+                Quick View
+              </Button>
+            </div>
+          </div>
         </div>
         <CardContent className="p-4">
           <h3 className="font-semibold mb-1 group-hover:text-blue-600 transition-colors duration-200 line-clamp-2">
@@ -128,7 +168,7 @@ export default function ProductsPage() {
           )}
         </CardContent>
       </Card>
-    </Link>
+    </div>
   )
 
   const ProductListItem = ({ product }: { product: any }) => (
@@ -394,6 +434,15 @@ export default function ProductsPage() {
           )}
         </div>
       </div>
+
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onAddToCart={handleAddToCart}
+        onAddToWishlist={handleAddToWishlist}
+      />
     </div>
   )
 }

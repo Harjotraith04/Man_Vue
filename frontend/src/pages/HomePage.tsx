@@ -1,17 +1,40 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProductStore } from '@/stores/productStore'
+import { useCartStore } from '@/stores/cartStore'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import ProductDetailModal from '@/components/ui/ProductDetailModal'
 import { ArrowRight, Star, TrendingUp, Sparkles, Headphones, Camera } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
 export default function HomePage() {
   const { featuredProducts, fetchFeaturedProducts, isLoading } = useProductStore()
+  const { addToCart, addToWishlist } = useCartStore()
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     fetchFeaturedProducts()
   }, [fetchFeaturedProducts])
+
+  const handleProductClick = (product: any) => {
+    setSelectedProduct(product)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedProduct(null)
+  }
+
+  const handleAddToCart = (product: any, quantity: number) => {
+    addToCart(product, quantity)
+  }
+
+  const handleAddToWishlist = (product: any) => {
+    addToWishlist(product)
+  }
 
   const heroCategories = [
     {
@@ -53,27 +76,27 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-gray-900 to-black text-white">
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+      <section className="relative bg-gradient-to-br from-gray-900 via-blue-900 to-black text-white overflow-hidden">
+        <div className="container mx-auto px-4 py-24">
+          <div className="max-w-5xl mx-auto text-center">
+            <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight">
               Redefine Your
-              <span className="block bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-pulse">
                 Style Story
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed">
+            <p className="text-xl md:text-3xl text-gray-300 mb-12 leading-relaxed max-w-3xl mx-auto">
               Discover premium men's fashion with AI-powered recommendations, 
-              AR try-ons, and immersive shopping experiences.
+              AR try-ons, and immersive shopping experiences that redefine modern style.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-4">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <Button size="lg" className="text-xl px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105">
                 Explore Collection
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-3 h-6 w-6" />
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-4 text-white border-white hover:bg-white hover:text-black">
+              <Button size="lg" variant="outline" className="text-xl px-12 py-6 text-white border-2 border-white hover:bg-white hover:text-black transition-all duration-300 transform hover:scale-105">
                 Try VR Gallery
               </Button>
             </div>
@@ -82,37 +105,40 @@ export default function HomePage() {
         
         {/* Floating Elements */}
         <div className="absolute top-20 left-10 animate-float">
-          <div className="w-16 h-16 bg-blue-500 rounded-full opacity-20"></div>
+          <div className="w-20 h-20 bg-blue-500 rounded-full opacity-30 blur-sm"></div>
         </div>
         <div className="absolute bottom-20 right-10 animate-float" style={{ animationDelay: '1s' }}>
-          <div className="w-12 h-12 bg-purple-500 rounded-full opacity-20"></div>
+          <div className="w-16 h-16 bg-purple-500 rounded-full opacity-30 blur-sm"></div>
+        </div>
+        <div className="absolute top-1/2 left-1/4 animate-float" style={{ animationDelay: '2s' }}>
+          <div className="w-12 h-12 bg-pink-500 rounded-full opacity-20 blur-sm"></div>
         </div>
       </section>
 
       {/* Category Grid */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Shop by Category</h2>
-            <p className="text-gray-600 text-lg">Discover your perfect style across our curated collections</p>
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">Shop by Category</h2>
+            <p className="text-gray-600 text-xl max-w-2xl mx-auto">Discover your perfect style across our carefully curated collections designed for the modern gentleman</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {heroCategories.map((category, index) => (
               <Link key={index} to={category.href} className="group">
-                <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                  <div className="relative h-80">
+                <Card className="overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 rounded-2xl border-0 shadow-lg">
+                  <div className="relative h-96">
                     <img
                       src={category.image}
                       alt={category.name}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-20 transition-all duration-300"></div>
-                    <div className="absolute bottom-6 left-6">
-                      <h3 className="text-white text-2xl font-bold mb-2">{category.name}</h3>
-                      <Button variant="secondary" size="sm">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/40 group-hover:via-black/10 group-hover:to-transparent transition-all duration-500"></div>
+                    <div className="absolute bottom-8 left-8">
+                      <h3 className="text-white text-3xl font-bold mb-4 group-hover:text-blue-300 transition-colors duration-300">{category.name}</h3>
+                      <Button variant="secondary" size="lg" className="bg-white text-gray-900 hover:bg-blue-50 hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
                         Shop Now
-                        <ArrowRight className="ml-2 h-4 w-4" />
+                        <ArrowRight className="ml-2 h-5 w-5" />
                       </Button>
                     </div>
                   </div>
@@ -124,17 +150,17 @@ export default function HomePage() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-16">
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center justify-between mb-16">
             <div>
-              <h2 className="text-4xl font-bold mb-4">Featured Products</h2>
-              <p className="text-gray-600 text-lg">Handpicked favorites from our latest collection</p>
+              <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">Featured Products</h2>
+              <p className="text-gray-600 text-xl">Handpicked favorites from our latest collection, curated for the discerning gentleman</p>
             </div>
             <Link to="/products?featured=true">
-              <Button variant="outline">
+              <Button variant="outline" size="lg" className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-8 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                 View All
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </div>
@@ -152,9 +178,12 @@ export default function HomePage() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {featuredProducts.slice(0, 8).map((product) => (
-                <Link key={product.id} to={`/product/${product.slug}`} className="group">
-                  <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 product-card">
-                    <div className="relative aspect-square">
+                <div key={product.id} className="group">
+                  <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 product-card cursor-pointer">
+                    <div 
+                      className="relative aspect-square"
+                      onClick={() => handleProductClick(product)}
+                    >
                       <img
                         src={product.primaryImage || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop'}
                         alt={product.title}
@@ -165,6 +194,20 @@ export default function HomePage() {
                           {product.discount.percentage}% OFF
                         </div>
                       )}
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <Button 
+                            size="sm" 
+                            className="bg-white text-black hover:bg-gray-100 shadow-lg"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleProductClick(product)
+                            }}
+                          >
+                            Quick View
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                     <CardContent className="p-4">
                       <h3 className="font-semibold mb-1 group-hover:text-blue-600 transition-colors duration-200">
@@ -191,7 +234,7 @@ export default function HomePage() {
                       </div>
                     </CardContent>
                   </Card>
-                </Link>
+                </div>
               ))}
             </div>
           )}
@@ -199,25 +242,25 @@ export default function HomePage() {
       </section>
 
       {/* AI Features */}
-      <section className="py-16 bg-gradient-to-r from-blue-50 to-purple-50">
+      <section className="py-20 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">AI-Powered Shopping</h2>
-            <p className="text-gray-600 text-lg">Experience the future of fashion retail</p>
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">AI-Powered Shopping</h2>
+            <p className="text-gray-600 text-xl max-w-3xl mx-auto">Experience the future of fashion retail with cutting-edge AI technology that understands your style preferences</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {features.map((feature, index) => (
-              <Card key={index} className="text-center p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <Card key={index} className="text-center p-10 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 rounded-2xl border-0 shadow-lg bg-white/80 backdrop-blur-sm">
                 <CardContent className="p-0">
-                  <div className="bg-gradient-to-r from-blue-500 to-purple-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <feature.icon className="h-8 w-8 text-white" />
+                  <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg">
+                    <feature.icon className="h-10 w-10 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold mb-4">{feature.title}</h3>
-                  <p className="text-gray-600 mb-6">{feature.description}</p>
-                  <Button variant="outline">
+                  <h3 className="text-2xl font-bold mb-6 text-gray-900">{feature.title}</h3>
+                  <p className="text-gray-600 mb-8 text-lg leading-relaxed">{feature.description}</p>
+                  <Button variant="outline" size="lg" className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-8 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                     Try Now
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </CardContent>
               </Card>
@@ -227,14 +270,18 @@ export default function HomePage() {
       </section>
 
       {/* Trending Section */}
-      <section className="py-16">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center mb-12">
-            <TrendingUp className="h-8 w-8 text-blue-500 mr-3" />
-            <h2 className="text-4xl font-bold">Trending Now</h2>
+          <div className="flex items-center justify-center mb-16">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
+                <TrendingUp className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-5xl font-bold bg-gradient-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">Trending Now</h2>
+            </div>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               'Oversized Blazers',
               'Vintage Denim',
@@ -248,9 +295,9 @@ export default function HomePage() {
               <Link
                 key={index}
                 to={`/search?q=${encodeURIComponent(trend)}`}
-                className="bg-white border border-gray-200 rounded-lg p-4 text-center hover:shadow-md transition-all duration-200 hover:border-blue-300"
+                className="bg-white border-2 border-gray-200 rounded-2xl p-6 text-center hover:shadow-xl transition-all duration-300 hover:border-blue-300 hover:-translate-y-2 group"
               >
-                <span className="font-medium text-gray-800">{trend}</span>
+                <span className="font-semibold text-gray-800 group-hover:text-blue-600 text-lg transition-colors duration-300">{trend}</span>
               </Link>
             ))}
           </div>
@@ -258,22 +305,36 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-black text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Wardrobe?</h2>
-          <p className="text-xl text-gray-300 mb-8">
-            Join thousands of fashion-forward men who trust ManVue for their style needs
+      <section className="py-24 bg-gradient-to-br from-gray-900 via-blue-900 to-black text-white relative overflow-hidden">
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <h2 className="text-6xl font-bold mb-6">Ready to Transform Your Wardrobe?</h2>
+          <p className="text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
+            Join thousands of fashion-forward men who trust ManVue for their style needs and discover a new level of sophistication
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <Button size="lg" className="text-xl px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105">
               Start Shopping
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black">
+            <Button size="lg" variant="outline" className="text-xl px-12 py-6 border-2 border-white text-white hover:bg-white hover:text-black transition-all duration-300 transform hover:scale-105">
               Download App
             </Button>
           </div>
         </div>
+        
+        {/* Background Elements */}
+        <div className="absolute top-10 left-10 w-32 h-32 bg-blue-500 rounded-full opacity-10 animate-float"></div>
+        <div className="absolute bottom-10 right-10 w-24 h-24 bg-purple-500 rounded-full opacity-10 animate-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/3 w-16 h-16 bg-pink-500 rounded-full opacity-10 animate-float" style={{ animationDelay: '2s' }}></div>
       </section>
+
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onAddToCart={handleAddToCart}
+        onAddToWishlist={handleAddToWishlist}
+      />
     </div>
   )
 }
