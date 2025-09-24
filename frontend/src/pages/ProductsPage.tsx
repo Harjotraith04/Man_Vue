@@ -13,7 +13,8 @@ import { formatPrice } from '@/lib/utils'
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { products, isLoading, fetchProducts } = useProductStore()
-  const { addToCart, addToWishlist } = useCartStore()
+  const { addItem: addToCart } = useCartStore()
+  const { addToWishlist } = useProductStore()
   
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
@@ -21,15 +22,29 @@ export default function ProductsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   
   const [filters, setFilters] = useState({
-    search: searchParams.get('search') || '',
-    category: searchParams.get('category') || '',
-    subCategory: searchParams.get('subCategory') || '',
-    minPrice: searchParams.get('minPrice') || '',
-    maxPrice: searchParams.get('maxPrice') || '',
-    sortBy: searchParams.get('sortBy') || 'newest',
-    inStock: searchParams.get('inStock') === 'true',
-    featured: searchParams.get('featured') === 'true'
+    search: '',
+    category: '',
+    subCategory: '',
+    minPrice: '',
+    maxPrice: '',
+    sortBy: 'newest',
+    inStock: false,
+    featured: false
   })
+
+  // Update filters when URL parameters change
+  useEffect(() => {
+    setFilters({
+      search: searchParams.get('search') || '',
+      category: searchParams.get('category') || '',
+      subCategory: searchParams.get('subCategory') || '',
+      minPrice: searchParams.get('minPrice') || '',
+      maxPrice: searchParams.get('maxPrice') || '',
+      sortBy: searchParams.get('sortBy') || 'newest',
+      inStock: searchParams.get('inStock') === 'true',
+      featured: searchParams.get('featured') === 'true'
+    })
+  }, [searchParams])
 
   const categories = [
     'formal', 'shirts', 'tshirts', 'jeans', 'trousers', 'chinos', 'shorts',
@@ -62,8 +77,13 @@ export default function ProductsPage() {
     setSearchParams(params)
   }, [filters, setSearchParams])
 
+  // Debounced product fetching for better performance
   useEffect(() => {
-    fetchProducts(filters)
+    const timeoutId = setTimeout(() => {
+      fetchProducts(filters)
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timeoutId)
   }, [filters, fetchProducts])
 
   const handleFilterChange = (key: string, value: any) => {
@@ -94,7 +114,7 @@ export default function ProductsPage() {
   }
 
   const handleAddToCart = (product: any, quantity: number) => {
-    addToCart(product, quantity)
+    addToCart(product._id || product.id, product, quantity.toString(), '')
   }
 
   const handleAddToWishlist = (product: any) => {
@@ -102,8 +122,8 @@ export default function ProductsPage() {
   }
 
   const ProductCard = ({ product }: { product: any }) => (
-    <div className="group">
-      <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer rounded-xl border-0 shadow-md">
+    <div className="group will-change-transform">
+      <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer rounded-xl border-0 shadow-md gradient-dark-card hover-neon gpu-accelerated hover:scale-105 hover:-translate-y-2">
         <div 
           className="relative aspect-square"
           onClick={() => handleProductClick(product)}
@@ -192,10 +212,10 @@ export default function ProductsPage() {
 
   const ProductListItem = ({ product }: { product: any }) => (
     <div 
-      className="group cursor-pointer"
+      className="group cursor-pointer will-change-transform"
       onClick={() => handleProductClick(product)}
     >
-      <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 rounded-xl border-0 shadow-md">
+      <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 rounded-xl border-0 shadow-md gradient-dark-card hover-neon gpu-accelerated hover:scale-102 hover:-translate-y-1">
         <div className="flex">
           <div className="w-64 h-64 flex-shrink-0 relative">
             <img
@@ -295,17 +315,17 @@ export default function ProductsPage() {
         <div className="bg-gradient-to-r from-black via-blue-900 to-purple-900 text-white rounded-3xl p-10 mb-10 relative overflow-hidden border border-blue-500/20 hover-neon">
           {/* Matrix background */}
           <div className="absolute inset-0 matrix-bg opacity-20" />
-          {/* Particles */}
+          {/* Optimized Particles */}
           <div className="absolute inset-0">
-            {[...Array(20)].map((_, i) => (
+            {[...Array(10)].map((_, i) => (
               <div
                 key={i}
-                className="particle opacity-30"
+                className="particle opacity-20 gpu-accelerated"
                 style={{
                   left: `${Math.random() * 100}%`,
                   top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 3}s`,
-                  animationDuration: `${3 + Math.random() * 6}s`,
+                  animationDelay: `${Math.random() * 2}s`,
+                  animationDuration: `${5 + Math.random() * 4}s`,
                 }}
               />
             ))}
@@ -494,21 +514,42 @@ export default function ProductsPage() {
         {/* Products Grid */}
         <div className="flex-1">
           {isLoading ? (
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6'}>
-              {[...Array(9)].map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className={`bg-gray-200 rounded-lg ${viewMode === 'grid' ? 'aspect-square mb-4' : 'h-48 mb-4'}`}></div>
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              ))}
+            <div className="text-center py-12">
+              <div className="spinner mx-auto mb-4"></div>
+              <p className="text-gray-400 text-lg">✨ Loading amazing products...</p>
+              <div className={`mt-8 ${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'space-y-6'}`}>
+                {[...Array(8)].map((_, index) => (
+                  <div key={index} className="gradient-dark-card rounded-2xl p-4">
+                    <div className={`skeleton ${viewMode === 'grid' ? 'aspect-square mb-4' : 'h-48 mb-4'} rounded-xl`}></div>
+                    <div className="h-4 skeleton rounded-lg mb-3"></div>
+                    <div className="h-4 skeleton rounded-lg w-2/3 mb-2"></div>
+                    <div className="h-6 skeleton rounded-lg w-1/2"></div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : products.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">No products found matching your criteria.</p>
-              <Button onClick={clearFilters} className="mt-4">
-                Clear Filters
-              </Button>
+            <div className="text-center py-16">
+              <div className="gradient-dark-card rounded-3xl p-12 max-w-md mx-auto border border-blue-500/20">
+                <div className="text-6xl mb-6">🔍</div>
+                <h3 className="text-2xl font-bold text-white mb-4">No Products Found</h3>
+                <p className="text-gray-300 text-lg mb-6">We couldn't find any products matching your criteria. Try adjusting your filters or search terms.</p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    onClick={clearFilters} 
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-bold morph-button neon-border"
+                  >
+                    🗑️ Clear Filters
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.href = '/products'}
+                    variant="outline"
+                    className="border-2 border-blue-400 text-blue-400 hover:bg-blue-500/20 px-8 py-3 rounded-xl font-bold morph-button hover-neon"
+                  >
+                    🏠 Browse All
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : (
             <>

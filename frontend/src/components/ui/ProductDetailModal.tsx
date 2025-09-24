@@ -42,17 +42,17 @@ export default function ProductDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      {/* Particle Background in Modal */}
+      {/* Optimized Particle Background in Modal */}
       <div className="absolute inset-0 pointer-events-none">
-        {[...Array(30)].map((_, i) => (
+        {[...Array(15)].map((_, i) => (
           <div
             key={i}
-            className="particle opacity-20"
+            className="particle opacity-15 gpu-accelerated"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${5 + Math.random() * 10}s`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${8 + Math.random() * 6}s`,
             }}
           />
         ))}

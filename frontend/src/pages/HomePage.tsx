@@ -100,24 +100,24 @@ export default function HomePage() {
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-black via-gray-900 to-blue-900 text-white overflow-hidden min-h-screen flex items-center justify-center">
-        {/* Particle System */}
+        {/* Optimized Particle System */}
         <div className="absolute inset-0">
-          {[...Array(100)].map((_, i) => (
+          {[...Array(30)].map((_, i) => (
             <div
               key={i}
-              className="particle opacity-30"
+              className="particle opacity-20 gpu-accelerated"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 10}s`,
-                animationDuration: `${5 + Math.random() * 15}s`,
+                animationDelay: `${Math.random() * 8}s`,
+                animationDuration: `${10 + Math.random() * 10}s`,
               }}
             />
           ))}
         </div>
 
-        {/* Matrix Background */}
-        <div className="absolute inset-0 matrix-bg opacity-20" />
+        {/* Subtle Matrix Background */}
+        <div className="absolute inset-0 matrix-bg opacity-15" />
         
         <div className="container mx-auto px-4 py-24 relative z-10">
           <div className="max-w-6xl mx-auto text-center">
@@ -266,20 +266,25 @@ export default function HomePage() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
-              {[...Array(10)].map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="bg-gray-700/50 aspect-square rounded-2xl mb-6 backdrop-blur-sm"></div>
-                  <div className="h-6 bg-gray-700/50 rounded-lg mb-4"></div>
-                  <div className="h-4 bg-gray-700/50 rounded-lg w-2/3"></div>
-                </div>
-              ))}
+            <div className="text-center py-12 mb-8">
+              <div className="spinner mx-auto mb-4"></div>
+              <p className="text-gray-300 text-xl">🔥 Loading featured products...</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mt-8">
+                {[...Array(10)].map((_, index) => (
+                  <div key={index} className="gradient-dark-card rounded-2xl p-4">
+                    <div className="skeleton aspect-square rounded-2xl mb-6"></div>
+                    <div className="h-4 skeleton rounded-lg mb-3"></div>
+                    <div className="h-4 skeleton rounded-lg w-2/3 mb-2"></div>
+                    <div className="h-6 skeleton rounded-lg w-1/2"></div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
               {featuredProducts.slice(0, 10).map((product, index) => (
-                <div key={product.id} className="group animate-slide-in-glow" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <Card className="overflow-hidden hover:shadow-2xl transition-all duration-500 product-card cursor-pointer rounded-2xl gradient-dark-card hover-neon card-3d transform hover:scale-110 hover:-translate-y-6">
+                <div key={product.id} className="group animate-slide-in-glow will-change-transform" style={{ animationDelay: `${index * 0.05}s` }}>
+                  <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 product-card cursor-pointer rounded-2xl gradient-dark-card hover-neon transform hover:scale-105 hover:-translate-y-3 gpu-accelerated">
                     <div 
                       className="relative aspect-square"
                       onClick={() => handleProductClick(product)}
@@ -437,22 +442,22 @@ export default function HomePage() {
 
       {/* CTA Section */}
       <section className="py-32 bg-gradient-to-br from-black via-purple-900 to-blue-900 text-white relative overflow-hidden">
-        {/* Enhanced Particle System */}
+        {/* Optimized Particle System */}
         <div className="absolute inset-0">
-          {[...Array(200)].map((_, i) => (
+          {[...Array(25)].map((_, i) => (
             <div
               key={i}
-              className="particle opacity-40"
+              className="particle opacity-30 gpu-accelerated"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 15}s`,
-                animationDuration: `${8 + Math.random() * 12}s`,
+                animationDelay: `${Math.random() * 10}s`,
+                animationDuration: `${12 + Math.random() * 8}s`,
               }}
             />
           ))}
         </div>
-        <div className="absolute inset-0 matrix-bg opacity-30" />
+        <div className="absolute inset-0 matrix-bg opacity-20" />
         
         <div className="container mx-auto px-4 text-center relative z-10">
           <h2 className="text-8xl font-bold mb-10 holographic glitch-effect animate-bounce-glow">Ready to Transform Your Wardrobe?</h2>
