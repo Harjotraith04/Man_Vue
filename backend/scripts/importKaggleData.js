@@ -19,7 +19,7 @@ const CATEGORY_MAPPING = {
     basePrice: { original: 2999, selling: 2199 }
   },
   'Formal': {
-    category: 'shirts',
+    category: 'formal',
     subCategory: 'formal',
     basePrice: { original: 2499, selling: 1899 }
   },
@@ -49,7 +49,8 @@ const CATEGORY_MAPPING = {
 const BRAND_MAPPING = {
   'accessories': 'ManVue Accessories',
   'kurtas': 'ManVue Ethnic',
-  'shirts': 'ManVue Formals',
+  'formal': 'ManVue Formals',
+  'shirts': 'ManVue Shirts',
   'jeans': 'ManVue Denim',
   'shoes': 'ManVue Footwear',
   'tshirts': 'ManVue Basics'
@@ -80,14 +81,24 @@ function generateSpecifications(categoryInfo, folderName) {
         neckType: 'traditional collar',
         care: 'Machine wash cold, iron on medium heat'
       };
-    case 'shirts':
+    case 'formal':
       return {
         ...baseSpecs,
-        material: folderName === 'Formal' ? '65% Cotton, 35% Polyester' : '100% Cotton',
+        material: '65% Cotton, 35% Polyester',
         fit: 'regular',
         pattern: 'solid',
         sleeve: 'long sleeve',
-        neckType: folderName === 'Formal' ? 'spread collar' : 'button-down collar',
+        neckType: 'spread collar',
+        care: 'Machine wash cold, iron on medium heat'
+      };
+    case 'shirts':
+      return {
+        ...baseSpecs,
+        material: '100% Cotton',
+        fit: 'regular',
+        pattern: 'solid',
+        sleeve: 'long sleeve',
+        neckType: 'button-down collar',
         care: 'Machine wash cold, iron on medium heat'
       };
     case 'jeans':
@@ -166,10 +177,10 @@ function generateTags(categoryInfo, folderName) {
       return [...baseTags, 'fashion', 'style', 'trendy'];
     case 'kurtas':
       return [...baseTags, 'ethnic', 'traditional', 'festival', 'cotton'];
+    case 'formal':
+      return [...baseTags, 'office', 'business', 'professional', 'formal'];
     case 'shirts':
-      return folderName === 'Formal' 
-        ? [...baseTags, 'office', 'business', 'professional', 'formal']
-        : [...baseTags, 'casual', 'everyday', 'cotton', 'comfortable'];
+      return [...baseTags, 'casual', 'everyday', 'cotton', 'comfortable'];
     case 'jeans':
       return [...baseTags, 'denim', 'casual', 'everyday', 'stretch', 'comfortable'];
     case 'shoes':
@@ -188,10 +199,10 @@ function generateFeatures(categoryInfo, folderName) {
       return ['Premium quality', 'Versatile design', 'Perfect for any occasion'];
     case 'kurtas':
       return ['Traditional craftsmanship', 'Comfortable fit', 'Perfect for festivals'];
+    case 'formal':
+      return ['Wrinkle resistant', 'Professional look', 'All-day comfort'];
     case 'shirts':
-      return folderName === 'Formal' 
-        ? ['Wrinkle resistant', 'Professional look', 'All-day comfort']
-        : ['Soft cotton fabric', 'Breathable', 'Easy care'];
+      return ['Soft cotton fabric', 'Breathable', 'Easy care'];
     case 'jeans':
       return ['Stretch comfort', 'Fade resistant', 'Classic 5-pocket design'];
     case 'shoes':

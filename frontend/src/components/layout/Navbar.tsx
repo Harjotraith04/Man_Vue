@@ -91,13 +91,14 @@ export default function Navbar() {
 
   // Main categories for navigation
   const mainCategories = [
-    { name: 'Shirts', path: '/products/shirts' },
-    { name: 'T-Shirts', path: '/products/tshirts' },
-    { name: 'Jeans', path: '/products/jeans' },
-    { name: 'Formal', path: '/products?subCategory=formal' },
-    { name: 'Ethnic', path: '/products/ethnic-wear' },
-    { name: 'Shoes', path: '/products/shoes' },
-    { name: 'Accessories', path: '/products/accessories' }
+    { name: 'Formal', path: '/products?category=formal' },
+    { name: 'Shirts', path: '/products?category=shirts' },
+    { name: 'T-Shirts', path: '/products?category=tshirts' },
+    { name: 'Jeans', path: '/products?category=jeans' },
+    { name: 'Kurtas', path: '/products?category=kurtas' },
+    { name: 'Shoes', path: '/products?category=shoes' },
+    { name: 'Accessories', path: '/products?category=accessories' },
+    { name: 'All Products', path: '/products' }
   ]
 
   return (

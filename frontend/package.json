@@ -69,5 +69,8 @@
     "vite"
   ],
   "author": "Manvue Team",
-  "license": "MIT"
+  "license": "MIT",
+  "resolutions": {
+    "three": "^0.163.0"
+  }
 }

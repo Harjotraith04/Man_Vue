@@ -78,7 +78,7 @@ const productSchema = new mongoose.Schema({
     enum: [
       'shirts', 'tshirts', 'jeans', 'trousers', 'chinos', 'shorts',
       'jackets', 'blazers', 'suits', 'sweaters', 'hoodies',
-      'kurtas', 'sherwanis', 'ethnic-wear',
+      'formal', 'kurtas', 'sherwanis', 'ethnic-wear',
       'shoes', 'sneakers', 'formal-shoes', 'boots', 'sandals',
       'watches', 'belts', 'wallets', 'sunglasses', 'ties', 'bags',
       'accessories', 'underwear', 'socks', 'caps', 'perfumes'
