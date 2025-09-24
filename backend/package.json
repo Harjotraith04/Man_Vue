@@ -9,7 +9,8 @@
     "test": "jest",
     "seed": "node scripts/seedData.js",
     "create-admin": "node scripts/createAdmin.js",
-    "fix-products": "node scripts/fixProductVisibility.js"
+    "fix-products": "node scripts/fixProductVisibility.js",
+    "import-kaggle": "node scripts/importKaggleData.js"
   },
   "dependencies": {
     "express": "^4.18.2",

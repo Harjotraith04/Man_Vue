@@ -449,6 +449,97 @@ router.get('/products', [
   }
 });
 
+// Update individual product status
+router.put('/products/:productId/status', [
+  adminAuth,
+  body('isActive').isBoolean().withMessage('isActive must be boolean')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { productId } = req.params;
+    const { isActive } = req.body;
+
+    const product = await Product.findByIdAndUpdate(
+      productId,
+      { 
+        isActive,
+        updatedBy: req.user.id
+      },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Product ${isActive ? 'activated' : 'deactivated'} successfully`,
+      data: { product }
+    });
+
+  } catch (error) {
+    console.error('Update product status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Hard delete product (permanently remove from database)
+router.delete('/products/:productId/delete', adminAuth, async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Remove product from any user wishlists
+    await User.updateMany(
+      { wishlist: productId },
+      { $pull: { wishlist: productId } }
+    );
+
+    // Remove product from any orders' relatedProducts arrays
+    await Product.updateMany(
+      { relatedProducts: productId },
+      { $pull: { relatedProducts: productId } }
+    );
+
+    // Hard delete the product
+    await Product.findByIdAndDelete(productId);
+
+    res.json({
+      success: true,
+      message: 'Product permanently deleted from database'
+    });
+
+  } catch (error) {
+    console.error('Hard delete product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
 // Bulk update products
 router.put('/products/bulk', [
   adminAuth,
@@ -493,6 +584,55 @@ router.put('/products/bulk', [
 
   } catch (error) {
     console.error('Bulk update products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Bulk delete products (permanently remove from database)
+router.delete('/products/bulk/delete', [
+  adminAuth,
+  body('productIds').isArray({ min: 1 }).withMessage('Product IDs array is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { productIds } = req.body;
+
+    // Remove products from any user wishlists
+    await User.updateMany(
+      { wishlist: { $in: productIds } },
+      { $pullAll: { wishlist: productIds } }
+    );
+
+    // Remove products from any orders' relatedProducts arrays
+    await Product.updateMany(
+      { relatedProducts: { $in: productIds } },
+      { $pullAll: { relatedProducts: productIds } }
+    );
+
+    // Hard delete the products
+    const result = await Product.deleteMany({ _id: { $in: productIds } });
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount} products permanently deleted from database`,
+      data: {
+        deletedCount: result.deletedCount
+      }
+    });
+
+  } catch (error) {
+    console.error('Bulk delete products error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

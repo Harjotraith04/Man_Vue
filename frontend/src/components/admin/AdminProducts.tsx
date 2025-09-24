@@ -142,11 +142,46 @@ export default function AdminProducts() {
     }
   }
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return
+  const handleBulkDelete = async () => {
+    if (selectedProducts.length === 0) {
+      toast.error('No products selected')
+      return
+    }
+
+    if (!confirm(`Are you sure you want to permanently delete ${selectedProducts.length} products? This action cannot be undone.`)) {
+      return
+    }
 
     try {
-      await axios.delete(`/products/${productId}`)
+      await axios.delete('/admin/products/bulk/delete', {
+        data: { productIds: selectedProducts }
+      })
+
+      toast.success(`${selectedProducts.length} products deleted successfully`)
+      setSelectedProducts([])
+      fetchProducts()
+    } catch (error) {
+      console.error('Bulk delete failed:', error)
+      toast.error('Bulk delete failed')
+    }
+  }
+
+  const handleToggleProductStatus = async (productId: string, isActive: boolean) => {
+    try {
+      await axios.put(`/admin/products/${productId}/status`, { isActive })
+      toast.success(`Product ${isActive ? 'activated' : 'deactivated'} successfully`)
+      fetchProducts()
+    } catch (error) {
+      console.error('Toggle status failed:', error)
+      toast.error('Failed to update product status')
+    }
+  }
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm('Are you sure you want to permanently delete this product? This action cannot be undone.')) return
+
+    try {
+      await axios.delete(`/admin/products/${productId}/delete`)
       toast.success('Product deleted successfully')
       fetchProducts()
     } catch (error) {
@@ -268,11 +303,7 @@ export default function AdminProducts() {
                 <Button 
                   size="sm" 
                   variant="destructive"
-                  onClick={() => {
-                    if (confirm(`Delete ${selectedProducts.length} products?`)) {
-                      // Handle bulk delete
-                    }
-                  }}
+                  onClick={() => handleBulkDelete()}
                 >
                   Delete
                 </Button>
@@ -381,6 +412,25 @@ export default function AdminProducts() {
                           <Button size="sm" variant="ghost">
                             <Edit className="h-4 w-4" />
                           </Button>
+                          {product.isActive ? (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleToggleProductStatus(product.id, false)}
+                              title="Deactivate product"
+                            >
+                              Deactivate
+                            </Button>
+                          ) : (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleToggleProductStatus(product.id, true)}
+                              title="Activate product"
+                            >
+                              Activate
+                            </Button>
+                          )}
                           <Button 
                             size="sm" 
                             variant="ghost"
