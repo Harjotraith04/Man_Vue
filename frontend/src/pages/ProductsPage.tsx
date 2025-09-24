@@ -289,24 +289,43 @@ export default function ProductsPage() {
   )
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 bg-background min-h-screen">
       {/* Header */}
       <div className="mb-10">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl p-8 mb-8">
-          <h1 className="text-5xl font-bold mb-4">Discover Premium Fashion</h1>
-          <p className="text-xl text-blue-100 mb-6">Explore our complete collection of 69 curated products from 7 distinct categories</p>
-          <div className="flex flex-wrap gap-4">
-            <div className="bg-white/20 rounded-lg px-4 py-2">
-              <span className="text-sm font-medium">🛍️ 69 Total Products</span>
-            </div>
-            <div className="bg-white/20 rounded-lg px-4 py-2">
-              <span className="text-sm font-medium">📂 7 Categories</span>
-            </div>
-            <div className="bg-white/20 rounded-lg px-4 py-2">
-              <span className="text-sm font-medium">🏷️ Real Product Images</span>
-            </div>
-            <div className="bg-white/20 rounded-lg px-4 py-2">
-              <span className="text-sm font-medium">✨ AI Powered</span>
+        <div className="bg-gradient-to-r from-black via-blue-900 to-purple-900 text-white rounded-3xl p-10 mb-10 relative overflow-hidden border border-blue-500/20 hover-neon">
+          {/* Matrix background */}
+          <div className="absolute inset-0 matrix-bg opacity-20" />
+          {/* Particles */}
+          <div className="absolute inset-0">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="particle opacity-30"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 3}s`,
+                  animationDuration: `${3 + Math.random() * 6}s`,
+                }}
+              />
+            ))}
+          </div>
+          <div className="relative z-10">
+            <h1 className="text-6xl font-bold mb-6 holographic animate-bounce-glow">Discover Premium Fashion</h1>
+            <p className="text-2xl text-blue-200 mb-8 animate-fade-in-up">🚀 Explore our complete collection of 69 curated products from 7 distinct categories</p>
+            <div className="flex flex-wrap gap-6">
+              <div className="bg-gradient-to-r from-white/20 to-blue-500/20 rounded-2xl px-6 py-3 border border-blue-400/30 neon-border">
+                <span className="text-lg font-bold">🛍️ 69 Total Products</span>
+              </div>
+              <div className="bg-gradient-to-r from-white/20 to-purple-500/20 rounded-2xl px-6 py-3 border border-purple-400/30 neon-border">
+                <span className="text-lg font-bold">📂 7 Categories</span>
+              </div>
+              <div className="bg-gradient-to-r from-white/20 to-pink-500/20 rounded-2xl px-6 py-3 border border-pink-400/30 neon-border">
+                <span className="text-lg font-bold">🏷️ Real Product Images</span>
+              </div>
+              <div className="bg-gradient-to-r from-white/20 to-green-500/20 rounded-2xl px-6 py-3 border border-green-400/30 neon-border">
+                <span className="text-lg font-bold">✨ AI Powered</span>
+              </div>
             </div>
           </div>
         </div>

@@ -49,10 +49,28 @@ function App() {
   }, [isAuthenticated, loadCart])
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col dark relative overflow-hidden">
+      {/* Particle Background */}
+      <div className="fixed inset-0 pointer-events-none">
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={i}
+            className="particle opacity-20"
+            style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 10}s`,
+              animationDuration: `${10 + Math.random() * 10}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Matrix Background */}
+      <div className="fixed inset-0 matrix-bg opacity-30 pointer-events-none" />
+      
       <Navbar />
       
-      <main className="flex-1">
+      <main className="flex-1 relative z-10">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
