@@ -22,6 +22,7 @@ import VRGalleryPage from './pages/VRGalleryPage'
 import AIFeaturesPage from './pages/AIFeaturesPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminAuthPage from './pages/AdminAuthPage'
+import TestPage from './pages/TestPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 // Auth Components
@@ -85,6 +86,7 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/admin/auth" element={<AdminAuthPage />} />
+          <Route path="/test" element={<TestPage />} />
           
           {/* Protected Routes */}
           <Route path="/cart" element={

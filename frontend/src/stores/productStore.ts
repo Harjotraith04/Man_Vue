@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { useAuthStore } from './authStore'
 import { Product } from './cartStore'
 
 export interface ProductFilters {
@@ -236,13 +237,23 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     get().fetchProducts(initialFilters)
   },
 
-  addToWishlist: async (productId: string) => {
+  addToWishlist: async (product: any) => {
     try {
+      // Check if user is authenticated
+      const { isAuthenticated } = useAuthStore.getState()
+      if (!isAuthenticated) {
+        toast.error('Please log in to add items to wishlist')
+        throw new Error('User not authenticated')
+      }
+
+      const productId = product._id || product.id
+      console.log('Adding to wishlist:', productId)
+      
       await axios.post(`/products/${productId}/wishlist`)
       
       // Update current product if it's the same one
       const currentProduct = get().currentProduct
-      if (currentProduct && currentProduct.id === productId) {
+      if (currentProduct && (currentProduct.id === productId || currentProduct._id === productId)) {
         set({
           currentProduct: {
             ...currentProduct,
@@ -253,7 +264,8 @@ export const useProductStore = create<ProductStore>((set, get) => ({
 
       toast.success('Added to wishlist')
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to add to wishlist'
+      console.error('Add to wishlist error:', error)
+      const message = error.response?.data?.message || error.message || 'Failed to add to wishlist'
       toast.error(message)
       throw error
     }

@@ -23,7 +23,7 @@ const createAdminUser = async () => {
     const adminUser = new User({
       name: 'Admin User',
       email: 'admin@manvue.com',
-      passwordHash: 'Admin123!', // This will be hashed by the pre-save hook
+      passwordHash: 'admin123', // This will be hashed by the pre-save hook
       role: 'admin',
       isEmailVerified: true,
       isActive: true
@@ -33,7 +33,7 @@ const createAdminUser = async () => {
 
     console.log('✅ Admin user created successfully!');
     console.log('📧 Email: admin@manvue.com');
-    console.log('🔒 Password: Admin123!');
+    console.log('🔒 Password: admin123');
     console.log('🔗 Admin Login: /admin/auth');
     
     console.log('\n🎉 You can now log in to the admin panel with these credentials.');

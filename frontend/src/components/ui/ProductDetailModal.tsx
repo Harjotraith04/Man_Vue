@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, Star, Heart, ShoppingBag, Minus, Plus, Share2, Truck, Shield, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,7 +9,7 @@ interface ProductDetailModalProps {
   product: any
   isOpen: boolean
   onClose: () => void
-  onAddToCart: (product: any, quantity: number) => void
+  onAddToCart: (product: any, quantity: number, size: string, color: string) => void
   onAddToWishlist: (product: any) => void
 }
 
@@ -27,12 +27,26 @@ export default function ProductDetailModal({
 
   if (!isOpen || !product) return null
 
-  const images = product.images || [product.primaryImage]
-  const sizes = product.sizes || ['S', 'M', 'L', 'XL', 'XXL']
-  const colors = product.colors || ['Black', 'White', 'Blue', 'Gray']
+  // Extract images, sizes, and colors from product variants
+  const images = product.variants?.[0]?.images?.map(img => img.url) || [product.primaryImage]
+  const sizes = product.variants?.[0]?.sizes?.map(s => s.size) || ['S', 'M', 'L', 'XL', 'XXL']
+  const colors = product.variants?.map(v => v.color) || ['Default']
+
+  // Set default values when modal opens
+  useEffect(() => {
+    if (isOpen && product) {
+      setSelectedSize(sizes[0] || '')
+      setSelectedColor(colors[0] || '')
+      setQuantity(1)
+      setSelectedImage(0)
+    }
+  }, [isOpen, product, sizes, colors])
 
   const handleAddToCart = () => {
-    onAddToCart(product, quantity)
+    // Use selected size and color, or default to first available
+    const size = selectedSize || sizes[0]
+    const color = selectedColor || colors[0]
+    onAddToCart(product, quantity, size, color)
     onClose()
   }
 

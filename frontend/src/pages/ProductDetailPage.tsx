@@ -10,8 +10,8 @@ import { formatPrice } from '@/lib/utils'
 
 export default function ProductDetailPage() {
   const { slug } = useParams()
-  const { getProductBySlug, addToWishlist } = useProductStore()
-  const { addToCart } = useCartStore()
+  const { fetchProduct, addToWishlist } = useProductStore()
+  const { addItem: addToCart } = useCartStore()
   
   const [product, setProduct] = useState<any>(null)
   const [selectedImage, setSelectedImage] = useState(0)
@@ -22,19 +22,22 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (slug) {
-      const fetchProduct = async () => {
+      const loadProduct = async () => {
         try {
-          const productData = await getProductBySlug(slug)
-          setProduct(productData)
+          setIsLoading(true)
+          await fetchProduct(slug)
+          // Get the product from the store after fetching
+          const { currentProduct } = useProductStore.getState()
+          setProduct(currentProduct)
         } catch (error) {
           console.error('Error fetching product:', error)
         } finally {
           setIsLoading(false)
         }
       }
-      fetchProduct()
+      loadProduct()
     }
-  }, [slug, getProductBySlug])
+  }, [slug, fetchProduct])
 
   if (isLoading) {
     return (
@@ -74,12 +77,23 @@ export default function ProductDetailPage() {
     )
   }
 
-  const images = product.images || [product.primaryImage]
-  const sizes = product.sizes || ['S', 'M', 'L', 'XL', 'XXL']
-  const colors = product.colors || ['Black', 'White', 'Blue', 'Gray']
+  // Extract data from product variants
+  const images = product?.variants?.[0]?.images?.map(img => img.url) || [product?.primaryImage]
+  const sizes = product?.variants?.[0]?.sizes?.map(s => s.size) || ['S', 'M', 'L', 'XL', 'XXL']
+  const colors = product?.variants?.map(v => v.color) || ['Default']
+
+  // Set default values when product loads
+  useEffect(() => {
+    if (product && sizes.length > 0 && colors.length > 0) {
+      setSelectedSize(sizes[0])
+      setSelectedColor(colors[0])
+    }
+  }, [product, sizes, colors])
 
   const handleAddToCart = () => {
-    addToCart(product, quantity)
+    const size = selectedSize || sizes[0]
+    const color = selectedColor || colors[0]
+    addToCart(product._id, quantity, size, color)
   }
 
   const handleAddToWishlist = () => {

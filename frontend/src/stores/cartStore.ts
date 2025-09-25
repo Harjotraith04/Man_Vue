@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { useAuthStore } from './authStore'
 
 export interface Product {
   id: string
@@ -110,11 +111,24 @@ export const useCartStore = create<CartStore>()(
       addItem: async (productId: string, quantity: number, size: string, color: string) => {
         set({ isLoading: true })
         try {
+          // Check if user is authenticated
+          const { isAuthenticated } = useAuthStore.getState()
+          if (!isAuthenticated) {
+            toast.error('Please log in to add items to cart')
+            throw new Error('User not authenticated')
+          }
+
+          // Ensure we have valid size and color
+          const validSize = size || 'M'
+          const validColor = color || 'Default'
+          
+          console.log('Adding to cart:', { productId, quantity, size: validSize, color: validColor })
+          
           await axios.post('/users/cart', {
             productId,
             quantity,
-            size,
-            color
+            size: validSize,
+            color: validColor
           })
           
           // Reload cart to get updated data
@@ -128,7 +142,8 @@ export const useCartStore = create<CartStore>()(
             set({ isOpen: false })
           }, 3000)
         } catch (error: any) {
-          const message = error.response?.data?.message || 'Failed to add item to cart'
+          console.error('Add to cart error:', error)
+          const message = error.response?.data?.message || error.message || 'Failed to add item to cart'
           toast.error(message)
           throw error
         } finally {

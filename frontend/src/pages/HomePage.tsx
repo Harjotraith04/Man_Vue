@@ -29,8 +29,11 @@ export default function HomePage() {
     setSelectedProduct(null)
   }
 
-  const handleAddToCart = (product: any, quantity: number) => {
-    addToCart(product._id || product.id, product, quantity.toString(), '')
+  const handleAddToCart = (product: any, quantity: number, size: string = '', color: string = '') => {
+    // Use default values from product variants if not provided
+    const defaultSize = size || product.variants?.[0]?.sizes?.[0]?.size || 'M'
+    const defaultColor = color || product.variants?.[0]?.color || 'Default'
+    addToCart(product._id || product.id, quantity, defaultSize, defaultColor)
   }
 
   const handleAddToWishlist = (product: any) => {

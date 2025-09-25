@@ -9,7 +9,10 @@
     "build": "cd frontend && npm run build",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "import-kaggle": "cd backend && npm run import-kaggle",
+    "create-admin": "cd backend && npm run create-admin",
+    "seed": "cd backend && npm run seed"
   },
   "keywords": ["fashion", "ecommerce", "men", "ai", "ar", "vr"],
   "author": "Manvue Team",
