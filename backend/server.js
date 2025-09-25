@@ -14,6 +14,7 @@ const orderRoutes = require('./routes/orders');
 const aiRoutes = require('./routes/ai');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
+const webScraperRoutes = require('./routes/webScraper');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -69,6 +70,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/web-scraper', webScraperRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -31,6 +31,7 @@ import AuthCallback from './components/auth/AuthCallback'
 
 // AI Components
 import ChatBot from './components/ai/ChatBot'
+import WebScanner from './components/ai/WebScanner'
 
 function App() {
   const { initialize, isAuthenticated } = useAuthStore()
@@ -125,6 +126,9 @@ function App() {
       </main>
       
       <Footer />
+      
+      {/* Web Scanner - shows all products from database */}
+      <WebScanner isAboveChatBot={true} />
       
       {/* AI Chatbot */}
       <ChatBot />
