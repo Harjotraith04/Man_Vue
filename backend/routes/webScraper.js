@@ -182,7 +182,7 @@ async function scrapeSite(site, query, limit = 10) {
   }
 }
 
-// Scrape products from multiple shopping websites
+// Compare ManVue database products with external shopping websites
 router.post('/scrape-products', [
   body('query').trim().isLength({ min: 2, max: 100 }).withMessage('Query must be 2-100 characters'),
   body('sites').optional().isArray().withMessage('Sites must be an array'),
@@ -198,52 +198,138 @@ router.post('/scrape-products', [
       });
     }
 
-    const { query, sites = ['amazon', 'ebay', 'next'], limit = 8 } = req.body;
-    const limitPerSite = Math.max(1, Math.floor(limit / sites.length));
+    const { query, sites = ['amazon', 'ebay', 'next'], limit = 12 } = req.body;
 
-    console.log(`Scraping products for query: "${query}" from ${sites.length} sites`);
+    console.log(`Comparing ManVue products with external sites for query: "${query}"`);
 
-    // Scrape from selected sites concurrently
-    const scrapePromises = sites
-      .filter(siteName => shoppingSites[siteName])
-      .map(siteName => 
-        scrapeSite(shoppingSites[siteName], query, limitPerSite)
-          .catch(error => {
-            console.error(`Failed to scrape ${siteName}:`, error.message);
-            return [];
-          })
-      );
-
-    const results = await Promise.all(scrapePromises);
-    const allProducts = results.flat();
-
-    // Remove duplicates based on similar titles
-    const uniqueProducts = [];
-    const seenTitles = new Set();
-
-    for (const product of allProducts) {
-      const normalizedTitle = product.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const titleKey = normalizedTitle.substring(0, 30); // Use first 30 chars for comparison
-      
-      if (!seenTitles.has(titleKey)) {
-        seenTitles.add(titleKey);
-        uniqueProducts.push(product);
-      }
+    // Step 1: Search ManVue database for matching products
+    let dbProducts = [];
+    
+    // Check if query matches any specific category
+    const queryLower = query.toLowerCase();
+    let matchedCategory = null;
+    
+    if (queryLower.includes('shirt')) {
+      matchedCategory = queryLower.includes('t-shirt') || queryLower.includes('tshirt') ? 'tshirts' : 'shirts';
+    } else if (queryLower.includes('jean')) {
+      matchedCategory = 'jeans';
+    } else if (queryLower.includes('shoe') || queryLower.includes('sneaker')) {
+      matchedCategory = 'shoes';
+    } else if (queryLower.includes('accessorie')) {
+      matchedCategory = 'accessories';
+    } else if (queryLower.includes('kurta') || queryLower.includes('ethnic')) {
+      matchedCategory = 'kurtas';
+    } else if (queryLower.includes('formal')) {
+      matchedCategory = 'formal';
+    }
+    
+    if (matchedCategory) {
+      dbProducts = await Product.find({
+        category: matchedCategory,
+        isActive: true
+      }).select('title price category brand variants slug').lean().limit(8);
+    } else {
+      // General search across all products
+      dbProducts = await Product.find({
+        $or: [
+          { title: { $regex: query, $options: 'i' } },
+          { category: { $regex: query, $options: 'i' } },
+          { tags: { $regex: query, $options: 'i' } }
+        ],
+        isActive: true
+      }).select('title price category brand variants slug').lean().limit(8);
     }
 
-    // Sort by price (ascending) and limit results
-    const sortedProducts = uniqueProducts
-      .sort((a, b) => a.price.selling - b.price.selling)
+    console.log(`Found ${dbProducts.length} matching products in ManVue database`);
+
+    // Step 2: Create external shopping comparisons with real ManVue products
+    const externalComparisons = [];
+    
+    if (dbProducts.length > 0) {
+      for (const dbProduct of dbProducts.slice(0, 6)) {
+        // Generate search terms for this specific product
+        const searchTerms = [
+          `${dbProduct.title.split(' ').slice(0, 3).join(' ')}`, // First 3 words
+          `${dbProduct.brand?.name || ''} ${dbProduct.category}`,
+          `${dbProduct.category} ${dbProduct.title.split(' ')[0]}`
+        ].filter(term => term.trim().length > 0);
+
+        // Create external site links for each search term
+        for (const searchTerm of searchTerms.slice(0, 1)) { // Limit to 1 search term per product
+          sites.forEach(siteName => {
+            const site = shoppingSites[siteName];
+            if (site) {
+              const searchUrl = site.searchUrl + encodeURIComponent(searchTerm);
+              
+              externalComparisons.push({
+                title: `${dbProduct.title} - Compare on ${site.baseUrl.replace('https://www.', '').replace('.co.uk', '').replace('.com', '')}`,
+                price: {
+                  selling: dbProduct.price?.selling || 0,
+                  currency: 'GBP'
+                },
+                image: dbProduct.variants?.[0]?.images?.[0]?.url || '/placeholder-image.jpg',
+                link: searchUrl, // Real working search URL
+                source: siteName,
+                category: 'comparison',
+                manvueProduct: {
+                  title: dbProduct.title,
+                  price: dbProduct.price?.selling || 0,
+                  slug: dbProduct.slug,
+                  internalLink: `/product/${dbProduct.slug}`
+                },
+                searchTerm,
+                isComparison: true
+              });
+            }
+          });
+        }
+      }
+    } else {
+      // If no ManVue products found, create general category searches
+      const generalSearches = [
+        { term: query, description: `Search for "${query}"` },
+        { term: `${query} UK`, description: `UK ${query}` }
+      ];
+
+      generalSearches.forEach(search => {
+        sites.forEach(siteName => {
+          const site = shoppingSites[siteName];
+          if (site) {
+            const searchUrl = site.searchUrl + encodeURIComponent(search.term);
+            
+            externalComparisons.push({
+              title: `${search.description} on ${site.baseUrl.replace('https://www.', '').replace('.co.uk', '').replace('.com', '')}`,
+              price: {
+                selling: 0,
+                currency: 'GBP'
+              },
+              image: '/placeholder-image.jpg',
+              link: searchUrl,
+              source: siteName,
+              category: 'search',
+              searchTerm: search.term,
+              isSearch: true
+            });
+          }
+        });
+      });
+    }
+
+    // Step 3: Limit and randomize results
+    const finalResults = externalComparisons
+      .sort(() => Math.random() - 0.5) // Randomize
       .slice(0, limit);
 
     res.json({
       success: true,
       data: {
-        products: sortedProducts,
+        products: finalResults,
         query,
-        totalFound: sortedProducts.length,
+        totalFound: finalResults.length,
         sitesScraped: sites.filter(siteName => shoppingSites[siteName]),
-        scrapedAt: new Date().toISOString()
+        manvueMatches: dbProducts.length,
+        scrapedAt: new Date().toISOString(),
+        isComparison: true
       }
     });
 

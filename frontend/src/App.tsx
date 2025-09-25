@@ -50,7 +50,7 @@ function App() {
   }, [isAuthenticated, loadCart])
 
   return (
-    <div className="min-h-screen bg-background flex flex-col dark relative overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col dark relative">
       {/* Optimized Particle Background - Reduced count for performance */}
       <div className="fixed inset-0 pointer-events-none">
         {[...Array(20)].map((_, i) => (

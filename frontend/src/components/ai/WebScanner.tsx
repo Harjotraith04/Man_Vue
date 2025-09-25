@@ -129,11 +129,12 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
 
   if (!isOpen) {
     return (
-      <div className={`fixed ${isAboveChatBot ? 'bottom-24' : 'bottom-6'} right-6 z-40`}>
+      <div className={`fixed ${isAboveChatBot ? 'bottom-24' : 'bottom-6'} right-6 z-[9999]`} style={{ position: 'fixed', isolation: 'isolate' }}>
         <Button
           onClick={() => setIsOpen(true)}
           className="rounded-full w-16 h-16 shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 border-2 border-yellow-400"
           title="Web Scanner - Search products across shopping websites"
+          style={{ position: 'relative', zIndex: 1 }}
         >
           <Globe className="h-7 w-7 text-white animate-pulse" />
         </Button>
@@ -142,10 +143,10 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
   }
 
   return (
-    <div className={`fixed ${isAboveChatBot ? 'bottom-24' : 'bottom-6'} right-6 z-40 transition-all duration-200 ${
-      isMinimized ? 'w-80 h-16' : 'w-[900px] h-[700px]'
-    }`}>
-      <Card className="h-full shadow-2xl bg-gray-900 backdrop-blur-sm border-2 border-orange-400">
+    <div className={`fixed ${isAboveChatBot ? 'bottom-24' : 'bottom-6'} right-6 z-[9999] transition-all duration-200 ${
+      isMinimized ? 'w-80 h-16' : 'w-[600px] h-[500px]'
+    }`} style={{ position: 'fixed', pointerEvents: 'auto' }}>
+      <Card className="h-full shadow-2xl bg-gray-900 border-2 border-orange-400" style={{ position: 'relative', zIndex: 1, isolation: 'isolate' }}>
         <CardHeader className="flex flex-row items-center justify-between p-4 border-b border-orange-300 bg-gradient-to-r from-gray-800 to-gray-700">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
