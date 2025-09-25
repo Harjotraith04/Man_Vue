@@ -89,6 +89,18 @@ export default function AdminAnalytics() {
 
       const currentData = currentResponse.data.data
       
+      console.log('Analytics response:', {
+        metric: selectedMetric,
+        data: currentData,
+        analyticsLength: currentData.analytics?.length,
+        sampleAnalytics: currentData.analytics?.slice(0, 3)
+      });
+      
+      // Ensure analytics array exists and is properly formatted
+      if (!currentData.analytics || !Array.isArray(currentData.analytics)) {
+        currentData.analytics = []
+      }
+
       // Calculate growth if previous data is available
       if (previousResponse) {
         const previousData = previousResponse.data.data
@@ -102,10 +114,18 @@ export default function AdminAnalytics() {
         }
 
         currentData.growth = {
-          revenue: calculateGrowthFromArrays(currentData.analytics, previousData.analytics, 'revenue'),
-          orders: calculateGrowthFromArrays(currentData.analytics, previousData.analytics, 'orders'),
-          users: calculateGrowthFromArrays(currentData.analytics, previousData.analytics, 'newUsers'),
-          products: calculateGrowthFromArrays(currentData.analytics, previousData.analytics, 'newProducts')
+          revenue: calculateGrowthFromArrays(currentData.analytics, previousData.analytics || [], 'revenue'),
+          orders: calculateGrowthFromArrays(currentData.analytics, previousData.analytics || [], 'orders'),
+          users: calculateGrowthFromArrays(currentData.analytics, previousData.analytics || [], 'newUsers'),
+          products: calculateGrowthFromArrays(currentData.analytics, previousData.analytics || [], 'newProducts')
+        }
+      } else {
+        // Set default growth values if no previous data
+        currentData.growth = {
+          revenue: 0,
+          orders: 0,
+          users: 0,
+          products: 0
         }
       }
 
@@ -113,6 +133,13 @@ export default function AdminAnalytics() {
     } catch (error) {
       console.error('Failed to fetch analytics:', error)
       toast.error('Failed to load analytics')
+      // Set empty data structure on error
+      setAnalyticsData({
+        analytics: [],
+        metric: selectedMetric,
+        dateRange: { startDate: dateRange.startDate, endDate: dateRange.endDate },
+        growth: { revenue: 0, orders: 0, users: 0, products: 0 }
+      })
     } finally {
       setIsLoading(false)
     }
@@ -158,28 +185,51 @@ export default function AdminAnalytics() {
       item.revenue || item.orders || item.newUsers || item.newProducts || 0
     ))
 
+    if (maxValue === 0) {
+      return (
+        <div className="h-64 flex items-center justify-center text-gray-400">
+          No data points with values
+        </div>
+      )
+    }
+
     return (
       <div className="h-64 flex items-end justify-between space-x-1 p-4">
         {data.slice(-30).map((item, index) => {
           const value = item.revenue || item.orders || item.newUsers || item.newProducts || 0
-          const height = (value / maxValue) * 200
+          const height = Math.max((value / maxValue) * 200, 4) // Minimum height of 4px
           
           // Safely handle the _id field - it might be a string, number, or object
           const itemId = item._id
-          const displayId = typeof itemId === 'string' 
-            ? itemId.split('-').slice(1).join('/')
-            : typeof itemId === 'number'
-            ? itemId.toString()
-            : 'N/A'
+          let displayId = 'N/A'
+          
+          if (typeof itemId === 'string') {
+            // Handle date strings like "2025-01-26"
+            if (itemId.includes('-')) {
+              const parts = itemId.split('-')
+              if (parts.length >= 3) {
+                displayId = `${parts[2]}/${parts[1]}` // DD/MM format
+              } else {
+                displayId = itemId
+              }
+            } else {
+              displayId = itemId
+            }
+          } else if (typeof itemId === 'number') {
+            displayId = itemId.toString()
+          } else if (itemId && typeof itemId === 'object' && itemId.date) {
+            // Handle MongoDB aggregation _id objects with date field
+            displayId = itemId.date.split('-').slice(1).join('/')
+          }
           
           return (
-            <div key={index} className="flex-1 flex flex-col items-center">
+            <div key={index} className="flex-1 flex flex-col items-center group">
               <div 
-                className="bg-blue-500 rounded-t w-full min-h-[4px]"
+                className="bg-gradient-to-t from-blue-600 to-blue-500 rounded-t w-full min-h-[4px] transition-all duration-300 hover:from-blue-500 hover:to-blue-400"
                 style={{ height: `${height}px` }}
-                title={`${itemId}: ${value}`}
+                title={`${displayId}: ${selectedMetric === 'revenue' ? formatPrice(value) : value}`}
               />
-              <span className="text-xs text-gray-400 mt-1 rotate-45 origin-left">
+              <span className="text-xs text-gray-400 mt-1 rotate-45 origin-left group-hover:text-white transition-colors">
                 {displayId}
               </span>
             </div>

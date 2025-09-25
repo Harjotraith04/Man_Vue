@@ -759,13 +759,13 @@ router.get('/analytics', [
           {
             $group: {
               _id: {
-                date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-                status: '$status'
+                $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
               },
-              count: { $sum: 1 }
+              orders: { $sum: 1 },
+              revenue: { $sum: '$pricing.total' }
             }
           },
-          { $sort: { '_id.date': 1 } }
+          { $sort: { '_id': 1 } }
         ]);
         break;
 
@@ -818,6 +818,13 @@ router.get('/analytics', [
           message: 'Invalid metric'
         });
     }
+
+    console.log(`Analytics query for ${metric}:`, {
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      resultCount: analytics.length,
+      sampleData: analytics.slice(0, 3)
+    });
 
     res.json({
       success: true,
