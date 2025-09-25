@@ -135,15 +135,15 @@ export default function AdminUsers() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Users</h1>
-          <p className="text-gray-600">Manage user accounts and permissions</p>
+          <h1 className="text-3xl font-bold text-white">Users</h1>
+          <p className="text-gray-300">Manage user accounts and permissions</p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline">
+          <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
             <Download className="h-4 w-4 mr-2" />
             Export Users
           </Button>
-          <Button>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
             <UserPlus className="h-4 w-4 mr-2" />
             Add User
           </Button>
@@ -151,7 +151,7 @@ export default function AdminUsers() {
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
+      <Card className="mb-6 bg-gray-800 border-gray-700">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-64">
@@ -161,7 +161,7 @@ export default function AdminUsers() {
                   placeholder="Search users by name or email..."
                   value={filters.search}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                 />
               </div>
             </div>
@@ -169,7 +169,7 @@ export default function AdminUsers() {
             <select
               value={filters.role}
               onChange={(e) => handleFilterChange('role', e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="px-3 py-2 border border-gray-600 rounded-md text-sm bg-gray-700 text-white"
             >
               <option value="">All Roles</option>
               <option value="user">User</option>
@@ -179,7 +179,7 @@ export default function AdminUsers() {
             <select
               value={filters.isActive}
               onChange={(e) => handleFilterChange('isActive', e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="px-3 py-2 border border-gray-600 rounded-md text-sm bg-gray-700 text-white"
             >
               <option value="">All Status</option>
               <option value="true">Active</option>
@@ -191,67 +191,67 @@ export default function AdminUsers() {
 
       {/* Users Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">{pagination.totalUsers}</div>
-            <div className="text-sm text-gray-600">Total Users</div>
+            <div className="text-2xl font-bold text-white">{pagination.totalUsers}</div>
+            <div className="text-sm text-gray-300">Total Users</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-400">
               {users.filter(u => u.isActive).length}
             </div>
-            <div className="text-sm text-gray-600">Active Users</div>
+            <div className="text-sm text-gray-300">Active Users</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-blue-400">
               {users.filter(u => u.role === 'admin').length}
             </div>
-            <div className="text-sm text-gray-600">Admins</div>
+            <div className="text-sm text-gray-300">Admins</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-orange-400">
               {users.filter(u => {
                 const weekAgo = new Date()
                 weekAgo.setDate(weekAgo.getDate() - 7)
                 return new Date(u.createdAt) > weekAgo
               }).length}
             </div>
-            <div className="text-sm text-gray-600">New This Week</div>
+            <div className="text-sm text-gray-300">New This Week</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Users Table */}
-      <Card>
+      <Card className="bg-gray-800 border-gray-700">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-8 text-center">
               <div className="spinner mx-auto mb-4"></div>
-              <p>Loading users...</p>
+              <p className="text-white">Loading users...</p>
             </div>
           ) : (
             <>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Last Login</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Orders</TableHead>
-                    <TableHead className="w-32">Actions</TableHead>
+                  <TableRow className="border-gray-700">
+                    <TableHead className="text-gray-300">User</TableHead>
+                    <TableHead className="text-gray-300">Role</TableHead>
+                    <TableHead className="text-gray-300">Status</TableHead>
+                    <TableHead className="text-gray-300">Last Login</TableHead>
+                    <TableHead className="text-gray-300">Joined</TableHead>
+                    <TableHead className="text-gray-300">Orders</TableHead>
+                    <TableHead className="w-32 text-gray-300">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {users.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className="border-gray-700 hover:bg-gray-700">
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           {user.avatar ? (
@@ -261,15 +261,15 @@ export default function AdminUsers() {
                               className="w-10 h-10 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-sm font-medium text-gray-600">
+                            <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center">
+                              <span className="text-sm font-medium text-white">
                                 {user.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                           )}
                           <div>
-                            <p className="font-medium text-sm">{user.name}</p>
-                            <p className="text-xs text-gray-500">{user.email}</p>
+                            <p className="font-medium text-sm text-white">{user.name}</p>
+                            <p className="text-xs text-gray-400">{user.email}</p>
                           </div>
                         </div>
                       </TableCell>
@@ -284,17 +284,17 @@ export default function AdminUsers() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-400">
                           {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-400">
                           {formatDate(user.createdAt)}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm">
+                        <span className="text-sm text-white">
                           {user.orderHistory?.length || 0}
                         </span>
                       </TableCell>
@@ -304,6 +304,7 @@ export default function AdminUsers() {
                             size="sm" 
                             variant="ghost"
                             title="View Details"
+                            className="text-gray-400 hover:text-white hover:bg-gray-600"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -314,8 +315,9 @@ export default function AdminUsers() {
                               variant="ghost"
                               title="Make Admin"
                               onClick={() => handleUpdateUserRole(user.id, 'admin')}
+                              className="text-gray-400 hover:text-blue-400 hover:bg-gray-600"
                             >
-                              <Shield className="h-4 w-4 text-blue-500" />
+                              <Shield className="h-4 w-4" />
                             </Button>
                           ) : (
                             <Button 
@@ -323,8 +325,9 @@ export default function AdminUsers() {
                               variant="ghost"
                               title="Remove Admin"
                               onClick={() => handleUpdateUserRole(user.id, 'user')}
+                              className="text-gray-400 hover:text-orange-400 hover:bg-gray-600"
                             >
-                              <ShieldOff className="h-4 w-4 text-orange-500" />
+                              <ShieldOff className="h-4 w-4" />
                             </Button>
                           )}
                           
@@ -333,11 +336,12 @@ export default function AdminUsers() {
                             variant="ghost"
                             title={user.isActive ? 'Deactivate' : 'Activate'}
                             onClick={() => handleUpdateUserStatus(user.id, !user.isActive)}
+                            className="text-gray-400 hover:text-red-400 hover:bg-gray-600"
                           >
                             {user.isActive ? (
-                              <Trash2 className="h-4 w-4 text-red-500" />
+                              <Trash2 className="h-4 w-4" />
                             ) : (
-                              <Edit className="h-4 w-4 text-green-500" />
+                              <Edit className="h-4 w-4" />
                             )}
                           </Button>
                         </div>
@@ -349,8 +353,8 @@ export default function AdminUsers() {
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className="p-4 border-t flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
+                <div className="p-4 border-t border-gray-700 flex items-center justify-between">
+                  <div className="text-sm text-gray-400">
                     Showing {(pagination.currentPage - 1) * filters.limit + 1} to{' '}
                     {Math.min(pagination.currentPage * filters.limit, pagination.totalUsers)} of{' '}
                     {pagination.totalUsers} users
@@ -361,6 +365,7 @@ export default function AdminUsers() {
                       variant="outline"
                       disabled={!pagination.hasPrev}
                       onClick={() => handlePageChange(pagination.currentPage - 1)}
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
                     >
                       Previous
                     </Button>
@@ -369,6 +374,7 @@ export default function AdminUsers() {
                       variant="outline"
                       disabled={!pagination.hasNext}
                       onClick={() => handlePageChange(pagination.currentPage + 1)}
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
                     >
                       Next
                     </Button>
