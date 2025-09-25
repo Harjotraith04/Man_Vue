@@ -146,6 +146,14 @@ export default function AdminAnalytics() {
 
   // Simple chart component (in a real app, you'd use a proper charting library like Chart.js or Recharts)
   const SimpleChart = ({ data }: { data: any[] }) => {
+    if (!data || data.length === 0) {
+      return (
+        <div className="h-64 flex items-center justify-center text-gray-400">
+          No data available
+        </div>
+      )
+    }
+
     const maxValue = Math.max(...data.map(item => 
       item.revenue || item.orders || item.newUsers || item.newProducts || 0
     ))
@@ -156,15 +164,23 @@ export default function AdminAnalytics() {
           const value = item.revenue || item.orders || item.newUsers || item.newProducts || 0
           const height = (value / maxValue) * 200
           
+          // Safely handle the _id field - it might be a string, number, or object
+          const itemId = item._id
+          const displayId = typeof itemId === 'string' 
+            ? itemId.split('-').slice(1).join('/')
+            : typeof itemId === 'number'
+            ? itemId.toString()
+            : 'N/A'
+          
           return (
             <div key={index} className="flex-1 flex flex-col items-center">
               <div 
                 className="bg-blue-500 rounded-t w-full min-h-[4px]"
                 style={{ height: `${height}px` }}
-                title={`${item._id}: ${value}`}
+                title={`${itemId}: ${value}`}
               />
               <span className="text-xs text-gray-400 mt-1 rotate-45 origin-left">
-                {item._id.split('-').slice(1).join('/')}
+                {displayId}
               </span>
             </div>
           )
@@ -347,10 +363,17 @@ export default function AdminAnalytics() {
           <CardContent>
             {analyticsData?.analytics.slice(0, 5).map((item, index) => {
               const value = item.revenue || item.orders || item.newUsers || item.newProducts || 0
+              const itemId = item._id
+              const displayDate = typeof itemId === 'string' 
+                ? formatDate(itemId)
+                : typeof itemId === 'number'
+                ? new Date(itemId).toLocaleDateString()
+                : 'N/A'
+              
               return (
                 <div key={index} className="flex justify-between items-center py-2 border-b border-gray-700 last:border-b-0">
                   <div>
-                    <p className="font-medium text-white">{formatDate(item._id)}</p>
+                    <p className="font-medium text-white">{displayDate}</p>
                     <p className="text-sm text-gray-400">
                       {selectedMetric === 'revenue' && 'Revenue'}
                       {selectedMetric === 'orders' && 'Orders'}
@@ -480,9 +503,17 @@ export default function AdminAnalytics() {
                 </tr>
               </thead>
               <tbody>
-                {analyticsData?.analytics.slice(0, 10).map((item, index) => (
-                  <tr key={index} className="border-b border-gray-700 hover:bg-gray-700">
-                    <td className="p-2 text-white">{formatDate(item._id)}</td>
+                {analyticsData?.analytics.slice(0, 10).map((item, index) => {
+                  const itemId = item._id
+                  const displayDate = typeof itemId === 'string' 
+                    ? formatDate(itemId)
+                    : typeof itemId === 'number'
+                    ? new Date(itemId).toLocaleDateString()
+                    : 'N/A'
+                  
+                  return (
+                    <tr key={index} className="border-b border-gray-700 hover:bg-gray-700">
+                      <td className="p-2 text-white">{displayDate}</td>
                     {selectedMetric === 'revenue' && (
                       <>
                         <td className="text-right p-2 text-white">{formatPrice(item.revenue || 0)}</td>
@@ -509,8 +540,9 @@ export default function AdminAnalytics() {
                         <td className="text-right p-2 text-white">{item.totalSales || 0}</td>
                       </>
                     )}
-                  </tr>
-                ))}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
