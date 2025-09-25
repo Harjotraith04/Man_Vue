@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -163,7 +163,7 @@ export default function AdminAnalytics() {
                 style={{ height: `${height}px` }}
                 title={`${item._id}: ${value}`}
               />
-              <span className="text-xs text-gray-500 mt-1 rotate-45 origin-left">
+              <span className="text-xs text-gray-400 mt-1 rotate-45 origin-left">
                 {item._id.split('-').slice(1).join('/')}
               </span>
             </div>
@@ -178,11 +178,11 @@ export default function AdminAnalytics() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-          <p className="text-gray-600">Track your business performance and growth</p>
+          <h1 className="text-3xl font-bold text-white">Analytics</h1>
+          <p className="text-gray-300">Track your business performance and growth</p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline" onClick={handleExportData}>
+          <Button variant="outline" onClick={handleExportData} className="border-gray-600 text-gray-300 hover:bg-gray-700">
             <Download className="h-4 w-4 mr-2" />
             Export Data
           </Button>
@@ -190,23 +190,23 @@ export default function AdminAnalytics() {
       </div>
 
       {/* Controls */}
-      <Card className="mb-6">
+      <Card className="mb-6 bg-gray-800 border-gray-700">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-gray-500" />
+              <Calendar className="h-4 w-4 text-gray-400" />
               <Input
                 type="date"
                 value={dateRange.startDate}
                 onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
-                className="w-auto"
+                className="w-auto bg-gray-700 border-gray-600 text-white"
               />
-              <span className="text-gray-500">to</span>
+              <span className="text-gray-400">to</span>
               <Input
                 type="date"
                 value={dateRange.endDate}
                 onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
-                className="w-auto"
+                className="w-auto bg-gray-700 border-gray-600 text-white"
               />
             </div>
             
@@ -217,6 +217,10 @@ export default function AdminAnalytics() {
                   variant={selectedMetric === metric.key ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedMetric(metric.key)}
+                  className={selectedMetric === metric.key 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    : 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                  }
                 >
                   <metric.icon className="h-4 w-4 mr-2" />
                   {metric.label}
@@ -229,81 +233,81 @@ export default function AdminAnalytics() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-300">Total Revenue</p>
+                <p className="text-2xl font-bold text-white">
                   {formatPrice(summaryStats?.totalRevenue || 0)}
                 </p>
-                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.revenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.revenue >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   <TrendingUp className="inline h-3 w-3 mr-1" />
                   {analyticsData?.growth ? `${analyticsData.growth.revenue >= 0 ? '+' : ''}${analyticsData.growth.revenue.toFixed(1)}%` : 'N/A'}
                 </p>
               </div>
-              <div className="h-12 w-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-green-600" />
+              <div className="h-12 w-12 bg-green-600 rounded-lg flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-300">Total Orders</p>
+                <p className="text-2xl font-bold text-white">
                   {summaryStats?.totalOrders || 0}
                 </p>
-                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.orders >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.orders >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   <TrendingUp className="inline h-3 w-3 mr-1" />
                   {analyticsData?.growth ? `${analyticsData.growth.orders >= 0 ? '+' : ''}${analyticsData.growth.orders.toFixed(1)}%` : 'N/A'}
                 </p>
               </div>
-              <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                <BarChart3 className="h-6 w-6 text-blue-600" />
+              <div className="h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                <BarChart3 className="h-6 w-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">New Users</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-300">New Users</p>
+                <p className="text-2xl font-bold text-white">
                   {summaryStats?.totalUsers || 0}
                 </p>
-                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.users >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.users >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   <TrendingUp className="inline h-3 w-3 mr-1" />
                   {analyticsData?.growth ? `${analyticsData.growth.users >= 0 ? '+' : ''}${analyticsData.growth.users.toFixed(1)}%` : 'N/A'}
                 </p>
               </div>
-              <div className="h-12 w-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                <Users className="h-6 w-6 text-purple-600" />
+              <div className="h-12 w-12 bg-purple-600 rounded-lg flex items-center justify-center">
+                <Users className="h-6 w-6 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">New Products</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-300">New Products</p>
+                <p className="text-2xl font-bold text-white">
                   {summaryStats?.totalProducts || 0}
                 </p>
-                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.products >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-sm ${analyticsData?.growth && analyticsData.growth.products >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   <TrendingUp className="inline h-3 w-3 mr-1" />
                   {analyticsData?.growth ? `${analyticsData.growth.products >= 0 ? '+' : ''}${analyticsData.growth.products.toFixed(1)}%` : 'N/A'}
                 </p>
               </div>
-              <div className="h-12 w-12 bg-orange-50 rounded-lg flex items-center justify-center">
-                <Package className="h-6 w-6 text-orange-600" />
+              <div className="h-12 w-12 bg-orange-600 rounded-lg flex items-center justify-center">
+                <Package className="h-6 w-6 text-white" />
               </div>
             </div>
           </CardContent>
@@ -311,9 +315,9 @@ export default function AdminAnalytics() {
       </div>
 
       {/* Main Chart */}
-      <Card className="mb-6">
+      <Card className="mb-6 bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="flex items-center">
+          <CardTitle className="flex items-center text-white">
             <BarChart3 className="h-5 w-5 mr-2" />
             {metrics.find(m => m.key === selectedMetric)?.label} Trends
           </CardTitle>
@@ -326,7 +330,7 @@ export default function AdminAnalytics() {
           ) : analyticsData?.analytics ? (
             <SimpleChart data={analyticsData.analytics} />
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-500">
+            <div className="h-64 flex items-center justify-center text-gray-400">
               No data available for the selected period
             </div>
           )}
@@ -336,18 +340,18 @@ export default function AdminAnalytics() {
       {/* Detailed Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Performing Periods */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle>Top Performing Periods</CardTitle>
+            <CardTitle className="text-white">Top Performing Periods</CardTitle>
           </CardHeader>
           <CardContent>
             {analyticsData?.analytics.slice(0, 5).map((item, index) => {
               const value = item.revenue || item.orders || item.newUsers || item.newProducts || 0
               return (
-                <div key={index} className="flex justify-between items-center py-2 border-b last:border-b-0">
+                <div key={index} className="flex justify-between items-center py-2 border-b border-gray-700 last:border-b-0">
                   <div>
-                    <p className="font-medium">{formatDate(item._id)}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-medium text-white">{formatDate(item._id)}</p>
+                    <p className="text-sm text-gray-400">
                       {selectedMetric === 'revenue' && 'Revenue'}
                       {selectedMetric === 'orders' && 'Orders'}
                       {selectedMetric === 'users' && 'New Users'}
@@ -355,7 +359,7 @@ export default function AdminAnalytics() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">
+                    <p className="font-bold text-white">
                       {selectedMetric === 'revenue' ? formatPrice(value) : value.toString()}
                     </p>
                   </div>
@@ -366,67 +370,67 @@ export default function AdminAnalytics() {
         </Card>
 
         {/* Growth Metrics */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle>Growth Metrics</CardTitle>
+            <CardTitle className="text-white">Growth Metrics</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Revenue Growth</span>
+                <span className="text-sm font-medium text-gray-300">Revenue Growth</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div className="w-32 bg-gray-700 rounded-full h-2">
                     <div 
                       className={`h-2 rounded-full ${analyticsData?.growth && analyticsData.growth.revenue >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
                       style={{ width: `${Math.min(Math.abs(analyticsData?.growth?.revenue || 0), 100)}%` }}
                     ></div>
                   </div>
-                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.revenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.revenue >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {analyticsData?.growth ? `${analyticsData.growth.revenue >= 0 ? '+' : ''}${analyticsData.growth.revenue.toFixed(1)}%` : 'N/A'}
                   </span>
                 </div>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Order Growth</span>
+                <span className="text-sm font-medium text-gray-300">Order Growth</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div className="w-32 bg-gray-700 rounded-full h-2">
                     <div 
                       className={`h-2 rounded-full ${analyticsData?.growth && analyticsData.growth.orders >= 0 ? 'bg-blue-500' : 'bg-red-500'}`}
                       style={{ width: `${Math.min(Math.abs(analyticsData?.growth?.orders || 0), 100)}%` }}
                     ></div>
                   </div>
-                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.orders >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.orders >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
                     {analyticsData?.growth ? `${analyticsData.growth.orders >= 0 ? '+' : ''}${analyticsData.growth.orders.toFixed(1)}%` : 'N/A'}
                   </span>
                 </div>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">User Growth</span>
+                <span className="text-sm font-medium text-gray-300">User Growth</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div className="w-32 bg-gray-700 rounded-full h-2">
                     <div 
                       className={`h-2 rounded-full ${analyticsData?.growth && analyticsData.growth.users >= 0 ? 'bg-purple-500' : 'bg-red-500'}`}
                       style={{ width: `${Math.min(Math.abs(analyticsData?.growth?.users || 0), 100)}%` }}
                     ></div>
                   </div>
-                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.users >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.users >= 0 ? 'text-purple-400' : 'text-red-400'}`}>
                     {analyticsData?.growth ? `${analyticsData.growth.users >= 0 ? '+' : ''}${analyticsData.growth.users.toFixed(1)}%` : 'N/A'}
                   </span>
                 </div>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Product Growth</span>
+                <span className="text-sm font-medium text-gray-300">Product Growth</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div className="w-32 bg-gray-700 rounded-full h-2">
                     <div 
                       className={`h-2 rounded-full ${analyticsData?.growth && analyticsData.growth.products >= 0 ? 'bg-orange-500' : 'bg-red-500'}`}
                       style={{ width: `${Math.min(Math.abs(analyticsData?.growth?.products || 0), 100)}%` }}
                     ></div>
                   </div>
-                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.products >= 0 ? 'text-orange-600' : 'text-red-600'}`}>
+                  <span className={`text-sm ${analyticsData?.growth && analyticsData.growth.products >= 0 ? 'text-orange-400' : 'text-red-400'}`}>
                     {analyticsData?.growth ? `${analyticsData.growth.products >= 0 ? '+' : ''}${analyticsData.growth.products.toFixed(1)}%` : 'N/A'}
                   </span>
                 </div>
@@ -437,72 +441,72 @@ export default function AdminAnalytics() {
       </div>
 
       {/* Data Table */}
-      <Card className="mt-6">
+      <Card className="mt-6 bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle>Detailed Data</CardTitle>
+          <CardTitle className="text-white">Detailed Data</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Date</th>
+                <tr className="border-b border-gray-700">
+                  <th className="text-left p-2 text-gray-300">Date</th>
                   {selectedMetric === 'revenue' && (
                     <>
-                      <th className="text-right p-2">Revenue</th>
-                      <th className="text-right p-2">Orders</th>
-                      <th className="text-right p-2">AOV</th>
+                      <th className="text-right p-2 text-gray-300">Revenue</th>
+                      <th className="text-right p-2 text-gray-300">Orders</th>
+                      <th className="text-right p-2 text-gray-300">AOV</th>
                     </>
                   )}
                   {selectedMetric === 'orders' && (
                     <>
-                      <th className="text-right p-2">Orders</th>
-                      <th className="text-right p-2">Revenue</th>
+                      <th className="text-right p-2 text-gray-300">Orders</th>
+                      <th className="text-right p-2 text-gray-300">Revenue</th>
                     </>
                   )}
                   {selectedMetric === 'users' && (
                     <>
-                      <th className="text-right p-2">New Users</th>
-                      <th className="text-right p-2">Active Users</th>
+                      <th className="text-right p-2 text-gray-300">New Users</th>
+                      <th className="text-right p-2 text-gray-300">Active Users</th>
                     </>
                   )}
                   {selectedMetric === 'products' && (
                     <>
-                      <th className="text-right p-2">New Products</th>
-                      <th className="text-right p-2">Total Views</th>
-                      <th className="text-right p-2">Total Sales</th>
+                      <th className="text-right p-2 text-gray-300">New Products</th>
+                      <th className="text-right p-2 text-gray-300">Total Views</th>
+                      <th className="text-right p-2 text-gray-300">Total Sales</th>
                     </>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {analyticsData?.analytics.slice(0, 10).map((item, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="p-2">{formatDate(item._id)}</td>
+                  <tr key={index} className="border-b border-gray-700 hover:bg-gray-700">
+                    <td className="p-2 text-white">{formatDate(item._id)}</td>
                     {selectedMetric === 'revenue' && (
                       <>
-                        <td className="text-right p-2">{formatPrice(item.revenue || 0)}</td>
-                        <td className="text-right p-2">{item.orders || 0}</td>
-                        <td className="text-right p-2">{formatPrice(item.averageOrderValue || 0)}</td>
+                        <td className="text-right p-2 text-white">{formatPrice(item.revenue || 0)}</td>
+                        <td className="text-right p-2 text-white">{item.orders || 0}</td>
+                        <td className="text-right p-2 text-white">{formatPrice(item.averageOrderValue || 0)}</td>
                       </>
                     )}
                     {selectedMetric === 'orders' && (
                       <>
-                        <td className="text-right p-2">{item.orders || 0}</td>
-                        <td className="text-right p-2">{formatPrice(item.revenue || 0)}</td>
+                        <td className="text-right p-2 text-white">{item.orders || 0}</td>
+                        <td className="text-right p-2 text-white">{formatPrice(item.revenue || 0)}</td>
                       </>
                     )}
                     {selectedMetric === 'users' && (
                       <>
-                        <td className="text-right p-2">{item.newUsers || 0}</td>
-                        <td className="text-right p-2">{item.activeUsers || 0}</td>
+                        <td className="text-right p-2 text-white">{item.newUsers || 0}</td>
+                        <td className="text-right p-2 text-white">{item.activeUsers || 0}</td>
                       </>
                     )}
                     {selectedMetric === 'products' && (
                       <>
-                        <td className="text-right p-2">{item.newProducts || 0}</td>
-                        <td className="text-right p-2">{item.totalViews || 0}</td>
-                        <td className="text-right p-2">{item.totalSales || 0}</td>
+                        <td className="text-right p-2 text-white">{item.newProducts || 0}</td>
+                        <td className="text-right p-2 text-white">{item.totalViews || 0}</td>
+                        <td className="text-right p-2 text-white">{item.totalSales || 0}</td>
                       </>
                     )}
                   </tr>
