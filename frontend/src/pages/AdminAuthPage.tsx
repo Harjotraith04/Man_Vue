@@ -84,31 +84,53 @@ export default function AdminAuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-800 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Animated background particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="particle absolute top-1/4 left-1/4 w-2 h-2"></div>
+        <div className="particle absolute top-3/4 left-3/4 w-1 h-1"></div>
+        <div className="particle absolute top-1/2 left-1/6 w-1.5 h-1.5"></div>
+        <div className="particle absolute top-1/6 left-2/3 w-1 h-1"></div>
+        <div className="particle absolute top-2/3 left-1/3 w-2 h-2"></div>
+      </div>
+      
+      <div className="max-w-md w-full space-y-8 relative z-10">
+        {/* Navigation Button */}
+        <div className="flex justify-end">
+          <a 
+            href="/auth" 
+            className="inline-flex items-center px-4 py-2 bg-gray-800 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700 hover:border-gray-500 transition-all duration-300 text-sm font-medium"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Customer Login
+          </a>
+        </div>
+
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
+          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 shadow-2xl animate-pulse-glow">
             <Shield className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-4xl font-extrabold text-white">
             Admin Portal
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-lg text-gray-300">
             Sign in to access the administration panel
           </p>
         </div>
 
-        <Card className="shadow-xl">
+        <Card className="gradient-dark-card shadow-2xl border-gray-700">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="flex items-center justify-center space-x-2">
-              <Lock className="h-5 w-5 text-blue-600" />
+            <CardTitle className="flex items-center justify-center space-x-2 text-white">
+              <Lock className="h-5 w-5 text-blue-400" />
               <span>Administrator Access</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-8">
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label htmlFor="admin-email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="admin-email" className="block text-sm font-medium text-gray-200 mb-2">
                   Email address
                 </label>
                 <Input
@@ -117,15 +139,15 @@ export default function AdminAuthPage() {
                   value={loginForm.email}
                   onChange={(e) => updateLoginForm('email', e.target.value)}
                   placeholder="Enter your admin email"
-                  className={`mt-1 ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'focus:border-blue-500 focus:ring-blue-500'}`}
+                  className={`bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 ${errors.email ? 'border-red-500' : ''}`}
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  <p className="mt-1 text-sm text-red-400">{errors.email}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="admin-password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="admin-password" className="block text-sm font-medium text-gray-200 mb-2">
                   Password
                 </label>
                 <Input
@@ -134,17 +156,17 @@ export default function AdminAuthPage() {
                   value={loginForm.password}
                   onChange={(e) => updateLoginForm('password', e.target.value)}
                   placeholder="Enter your admin password"
-                  className={`mt-1 ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'focus:border-blue-500 focus:ring-blue-500'}`}
+                  className={`bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 ${errors.password ? 'border-red-500' : ''}`}
                 />
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <p className="mt-1 text-sm text-red-400">{errors.password}</p>
                 )}
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+              <div className="bg-amber-900/20 border border-amber-600/30 rounded-md p-4">
                 <div className="flex">
                   <div className="ml-3">
-                    <p className="text-sm text-amber-700">
+                    <p className="text-sm text-amber-300">
                       This area is restricted to authorized administrators only. 
                       Unauthorized access attempts are logged and monitored.
                     </p>
@@ -155,7 +177,7 @@ export default function AdminAuthPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-dashed border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                className="w-full border-dashed border-gray-600 text-gray-300 hover:border-blue-400 hover:text-blue-300 hover:bg-gray-700 transition-all duration-200 bg-gray-800"
                 onClick={handleAutoFillCredentials}
                 disabled={isLoading}
               >
@@ -164,7 +186,7 @@ export default function AdminAuthPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-md transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -178,10 +200,10 @@ export default function AdminAuthPage() {
               </Button>
             </form>
 
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <p className="text-center text-xs text-gray-500">
+            <div className="mt-6 pt-4 border-t border-gray-700">
+              <p className="text-center text-xs text-gray-400">
                 Need customer access?{' '}
-                <a href="/auth" className="font-medium text-blue-600 hover:text-blue-500">
+                <a href="/auth" className="font-medium text-blue-400 hover:text-blue-300 transition-colors">
                   Go to Customer Login
                 </a>
               </p>
@@ -190,7 +212,7 @@ export default function AdminAuthPage() {
         </Card>
 
         <div className="text-center">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-400">
             Protected by enterprise-grade security. All access is logged and monitored.
           </p>
         </div>
