@@ -168,22 +168,22 @@ export default function AdminDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="spinner mx-auto mb-4"></div>
-          <p>Loading dashboard...</p>
+          <p className="text-white">Loading dashboard...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-black flex">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-sm border-r">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-800">Admin Panel</h2>
-          <p className="text-sm text-gray-600">Welcome, {user?.name}</p>
+      <div className="w-64 bg-gray-900 shadow-sm border-r border-gray-700">
+        <div className="p-6 border-b border-gray-700">
+          <h2 className="text-xl font-bold text-white">Admin Panel</h2>
+          <p className="text-sm text-gray-300">Welcome, {user?.name}</p>
         </div>
         
         <nav className="p-4">
@@ -194,8 +194,8 @@ export default function AdminDashboardPage() {
                   to={item.path}
                   className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActivePath(item.path, item.exact)
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      ? 'bg-blue-600 text-white border-r-2 border-blue-400'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
                   <item.icon className="h-5 w-5" />
@@ -208,7 +208,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto bg-gray-900">
         <Routes>
           <Route index element={<DashboardOverview stats={stats} />} />
           <Route path="products" element={<AdminProducts />} />
@@ -265,25 +265,25 @@ function DashboardOverview({ stats }: { stats: DashboardStats | null }) {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="text-gray-600">Welcome back! Here's what's happening with your store.</p>
+        <h1 className="text-3xl font-bold text-white">Dashboard Overview</h1>
+        <p className="text-gray-300">Welcome back! Here's what's happening with your store.</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {statCards.map((stat, index) => (
-          <Card key={index}>
+          <Card key={index} className="bg-gray-800 border-gray-700">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className={`text-sm ${stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className="text-sm font-medium text-gray-300">{stat.title}</p>
+                  <p className="text-2xl font-bold text-white">{stat.value}</p>
+                  <p className={`text-sm ${stat.changeType === 'positive' ? 'text-green-400' : 'text-red-400'}`}>
                     {stat.change} from last period
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <stat.icon className="h-6 w-6 text-blue-600" />
+                <div className="h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <stat.icon className="h-6 w-6 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -293,58 +293,58 @@ function DashboardOverview({ stats }: { stats: DashboardStats | null }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Order Status Overview */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle>Order Status Overview</CardTitle>
+            <CardTitle className="text-white">Order Status Overview</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Pending</span>
+                <span className="text-sm font-medium text-gray-300">Pending</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div className="w-32 bg-gray-700 rounded-full h-2">
                     <div 
                       className="bg-yellow-500 h-2 rounded-full" 
                       style={{ width: `${stats.orders.totalOrders > 0 ? (stats.orders.pendingOrders / stats.orders.totalOrders) * 100 : 0}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-600">{stats.orders.pendingOrders}</span>
+                  <span className="text-sm text-gray-300">{stats.orders.pendingOrders}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Processing</span>
+                <span className="text-sm font-medium text-gray-300">Processing</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div className="w-32 bg-gray-700 rounded-full h-2">
                     <div 
                       className="bg-blue-500 h-2 rounded-full" 
                       style={{ width: `${stats.orders.totalOrders > 0 ? (stats.orders.processingOrders / stats.orders.totalOrders) * 100 : 0}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-600">{stats.orders.processingOrders}</span>
+                  <span className="text-sm text-gray-300">{stats.orders.processingOrders}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Shipped</span>
+                <span className="text-sm font-medium text-gray-300">Shipped</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div className="w-32 bg-gray-700 rounded-full h-2">
                     <div 
                       className="bg-purple-500 h-2 rounded-full" 
                       style={{ width: `${stats.orders.totalOrders > 0 ? (stats.orders.shippedOrders / stats.orders.totalOrders) * 100 : 0}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-600">{stats.orders.shippedOrders}</span>
+                  <span className="text-sm text-gray-300">{stats.orders.shippedOrders}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Delivered</span>
+                <span className="text-sm font-medium text-gray-300">Delivered</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div className="w-32 bg-gray-700 rounded-full h-2">
                     <div 
                       className="bg-green-500 h-2 rounded-full" 
                       style={{ width: `${stats.orders.totalOrders > 0 ? (stats.orders.deliveredOrders / stats.orders.totalOrders) * 100 : 0}%` }}
                     ></div>
                   </div>
-                  <span className="text-sm text-gray-600">{stats.orders.deliveredOrders}</span>
+                  <span className="text-sm text-gray-300">{stats.orders.deliveredOrders}</span>
                 </div>
               </div>
             </div>
@@ -352,30 +352,30 @@ function DashboardOverview({ stats }: { stats: DashboardStats | null }) {
         </Card>
 
         {/* Quick Actions */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle className="text-white">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <Link to="/admin/products">
-                <Button className="w-full h-16 flex flex-col items-center justify-center">
+                <Button className="w-full h-16 flex flex-col items-center justify-center bg-blue-600 hover:bg-blue-700 text-white">
                   <Plus className="h-5 w-5 mb-1" />
                   Add Product
                 </Button>
               </Link>
-              <Button variant="outline" className="w-full h-16 flex flex-col items-center justify-center">
+              <Button variant="outline" className="w-full h-16 flex flex-col items-center justify-center border-gray-600 text-gray-300 hover:bg-gray-700">
                 <Download className="h-5 w-5 mb-1" />
                 Export Data
               </Button>
               <Link to="/admin/orders">
-                <Button variant="outline" className="w-full h-16 flex flex-col items-center justify-center">
+                <Button variant="outline" className="w-full h-16 flex flex-col items-center justify-center border-gray-600 text-gray-300 hover:bg-gray-700">
                   <Eye className="h-5 w-5 mb-1" />
                   View Orders
                 </Button>
               </Link>
               <Link to="/admin/analytics">
-                <Button variant="outline" className="w-full h-16 flex flex-col items-center justify-center">
+                <Button variant="outline" className="w-full h-16 flex flex-col items-center justify-center border-gray-600 text-gray-300 hover:bg-gray-700">
                   <BarChart3 className="h-5 w-5 mb-1" />
                   Analytics
                 </Button>
@@ -387,26 +387,26 @@ function DashboardOverview({ stats }: { stats: DashboardStats | null }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Products */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle>Top Selling Products</CardTitle>
+            <CardTitle className="text-white">Top Selling Products</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {stats.topProducts.slice(0, 5).map((product, index) => (
                 <div key={product._id} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium">
+                    <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-sm font-medium text-white">
                       {index + 1}
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{product.title}</p>
-                      <p className="text-xs text-gray-600">{product.category}</p>
+                      <p className="font-medium text-sm text-white">{product.title}</p>
+                      <p className="text-xs text-gray-400">{product.category}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium">{product.soldCount} sold</p>
-                    <p className="text-xs text-gray-600">{formatPrice(product.price.selling)}</p>
+                    <p className="text-sm font-medium text-white">{product.soldCount} sold</p>
+                    <p className="text-xs text-gray-400">{formatPrice(product.price.selling)}</p>
                   </div>
                 </div>
               ))}
@@ -415,17 +415,17 @@ function DashboardOverview({ stats }: { stats: DashboardStats | null }) {
         </Card>
 
         {/* Recent Orders */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
+            <CardTitle className="text-white">Recent Orders</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {stats.recentOrders.slice(0, 5).map((order) => (
                 <div key={order._id} className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-sm">#{order.orderNumber}</p>
-                    <p className="text-xs text-gray-600">{order.user.name}</p>
+                    <p className="font-medium text-sm text-white">#{order.orderNumber}</p>
+                    <p className="text-xs text-gray-400">{order.user.name}</p>
                   </div>
                   <div className="text-right">
                     <Badge 
@@ -438,7 +438,7 @@ function DashboardOverview({ stats }: { stats: DashboardStats | null }) {
                     >
                       {order.status}
                     </Badge>
-                    <p className="text-xs text-gray-600 mt-1">{formatPrice(order.pricing.total)}</p>
+                    <p className="text-xs text-gray-400 mt-1">{formatPrice(order.pricing.total)}</p>
                   </div>
                 </div>
               ))}
