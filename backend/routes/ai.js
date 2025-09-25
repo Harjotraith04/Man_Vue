@@ -9,6 +9,200 @@ const router = express.Router();
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Vector similarity function (cosine similarity)
+function cosineSimilarity(vecA, vecB) {
+  if (vecA.length !== vecB.length) return 0;
+  
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+// Generate embeddings for text using Gemini
+async function generateEmbedding(text) {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
+    const prompt = `Convert this text to a numerical vector representation for similarity search. Return only a JSON array of numbers: "${text}"`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const textResponse = response.text();
+    
+    // Try to parse as JSON array
+    try {
+      return JSON.parse(textResponse);
+    } catch (e) {
+      // Fallback: generate simple hash-based vector
+      return generateHashVector(text);
+    }
+  } catch (error) {
+    console.warn('Gemini embedding failed, using hash vector:', error.message);
+    return generateHashVector(text);
+  }
+}
+
+// Generate hash-based vector as fallback
+function generateHashVector(text) {
+  const words = text.toLowerCase().split(/\s+/);
+  const vector = new Array(50).fill(0);
+  
+  words.forEach(word => {
+    const hash = word.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    
+    const index = Math.abs(hash) % 50;
+    vector[index] += 1;
+  });
+  
+  // Normalize vector
+  const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+  return vector.map(val => val / magnitude);
+}
+
+// Enhanced product search with vector similarity
+async function searchProductsWithVector(query, limit = 6) {
+  try {
+    const queryLower = query.toLowerCase();
+    
+    // Extract color and category from query
+    const colors = ['red', 'blue', 'black', 'white', 'green', 'brown', 'navy', 'gray', 'grey', 'pink', 'purple', 'yellow', 'orange'];
+    const categories = ['shirt', 'shirts', 'jean', 'jeans', 'shoe', 'shoes', 'jacket', 'jackets', 't-shirt', 'tshirt', 'accessory', 'accessories', 'kurta', 'kurtas'];
+    
+    const foundColors = colors.filter(color => queryLower.includes(color));
+    const foundCategories = categories.filter(cat => queryLower.includes(cat));
+    
+    // Build search query with color and category filters
+    let searchQuery = { isActive: true };
+    
+    // Add category filter if found
+    if (foundCategories.length > 0) {
+      const categoryMap = {
+        'shirt': 'shirts',
+        'shirts': 'shirts',
+        'jean': 'jeans',
+        'jeans': 'jeans',
+        'shoe': 'shoes',
+        'shoes': 'shoes',
+        'jacket': 'jackets',
+        'jackets': 'jackets',
+        't-shirt': 'tshirts',
+        'tshirt': 'tshirts',
+        'accessory': 'accessories',
+        'accessories': 'accessories',
+        'kurta': 'kurtas',
+        'kurtas': 'kurtas'
+      };
+      
+      const targetCategories = foundCategories.map(cat => categoryMap[cat]).filter(Boolean);
+      if (targetCategories.length > 0) {
+        searchQuery.category = { $in: targetCategories };
+      }
+    }
+    
+    // Add color filter if found
+    if (foundColors.length > 0) {
+      searchQuery.$or = [
+        { 'variants.color': { $in: foundColors } },
+        { 'variants.colorCode': { $regex: new RegExp(foundColors.join('|'), 'i') } },
+        { tags: { $in: foundColors } }
+      ];
+    }
+    
+    // Get products with filters
+    let products = await Product.find(searchQuery)
+      .select('title description category subCategory price.selling primaryImage rating.average brand.name variants tags features')
+      .lean();
+    
+    // If no products found with color/category filters, try broader search
+    if (products.length === 0) {
+      products = await Product.find({ isActive: true })
+        .select('title description category subCategory price.selling primaryImage rating.average brand.name variants tags features')
+        .lean();
+    }
+    
+    // Generate query embedding for similarity calculation
+    const queryEmbedding = await generateEmbedding(query);
+    
+    // Calculate similarity scores with enhanced matching
+    const productsWithSimilarity = products.map(product => {
+      const productText = `${product.title} ${product.description} ${product.category} ${product.subCategory} ${product.tags.join(' ')} ${product.features.join(' ')}`;
+      
+      // Add color information from variants
+      const variantColors = product.variants.map(v => v.color).join(' ');
+      const enhancedProductText = `${productText} ${variantColors}`;
+      
+      const productEmbedding = generateHashVector(enhancedProductText);
+      let similarity = cosineSimilarity(queryEmbedding, productEmbedding);
+      
+      // Boost similarity for exact color matches
+      if (foundColors.length > 0) {
+        const hasMatchingColor = foundColors.some(color => 
+          product.variants.some(v => v.color.toLowerCase().includes(color)) ||
+          product.tags.some(tag => tag.toLowerCase().includes(color))
+        );
+        if (hasMatchingColor) {
+          similarity += 0.5; // Higher boost for color match
+          
+          // Additional boost if the color is the primary variant
+          const hasPrimaryColorMatch = foundColors.some(color => 
+            product.variants.some(v => 
+              v.color.toLowerCase().includes(color) && 
+              v.images && v.images.some(img => img.isPrimary)
+            )
+          );
+          if (hasPrimaryColorMatch) {
+            similarity += 0.2; // Extra boost for primary color match
+          }
+        }
+      }
+      
+      // Boost similarity for exact category matches
+      if (foundCategories.length > 0) {
+        const hasMatchingCategory = foundCategories.some(cat => 
+          product.category.toLowerCase().includes(cat) ||
+          product.subCategory.toLowerCase().includes(cat)
+        );
+        if (hasMatchingCategory) {
+          similarity += 0.2; // Boost for category match
+        }
+      }
+      
+      return {
+        ...product,
+        similarity,
+        variants: product.variants // Ensure variants are preserved
+      };
+    });
+    
+    // Sort by similarity and return top results
+    return productsWithSimilarity
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
+      
+  } catch (error) {
+    console.error('Vector search error:', error);
+    // Fallback to text search
+    return await Product.find({
+      isActive: true,
+      $text: { $search: query }
+    })
+    .select('title description category subCategory price.selling primaryImage rating.average brand.name variants tags features')
+    .sort({ score: { $meta: 'textScore' } })
+    .limit(limit)
+    .lean();
+  }
+}
+
 // Fashion chatbot endpoint
 router.post('/chat', [
   optionalAuth,
@@ -27,6 +221,7 @@ router.post('/chat', [
 
     const { message, context = [] } = req.body;
     let botMessage;
+    let recommendedProducts = [];
     
     // Try Gemini AI first, fallback to rule-based responses
     try {
@@ -42,7 +237,85 @@ router.post('/chat', [
           `;
         }
 
-        // Create context-aware prompt
+        // Search for relevant products using exact database matching
+        const searchQuery = message.toLowerCase();
+        const isProductQuery = /\b(shirt|shirts|jean|jeans|shoe|shoes|jacket|jackets|t-shirt|tshirt|accessory|accessories|kurta|kurtas|formal|casual|red|blue|black|white|green|brown|navy|gray|grey|color|colors|price|budget|premium|cheap|expensive|maximum|minimum|max|min|show|give|want|need|looking|find)\b/.test(searchQuery);
+        
+        if (isProductQuery) {
+          // Extract specific search criteria
+          const colorKeywords = ['red', 'blue', 'black', 'white', 'green', 'brown', 'navy', 'gray', 'grey'];
+          const categoryKeywords = ['shirt', 'shirts', 'jean', 'jeans', 'shoe', 'shoes', 'jacket', 'jackets', 't-shirt', 'tshirt', 'accessory', 'accessories', 'kurta', 'kurtas'];
+          
+          const foundColor = colorKeywords.find(color => searchQuery.includes(color));
+          const foundCategory = categoryKeywords.find(cat => searchQuery.includes(cat));
+          
+          // Build exact database query
+          let dbQuery = {};
+          
+          // Add category filter if found
+          if (foundCategory) {
+            if (foundCategory.includes('shirt') || foundCategory.includes('tshirt')) {
+              dbQuery.category = 'shirts';
+            } else if (foundCategory.includes('jean')) {
+              dbQuery.category = 'jeans';
+            } else if (foundCategory.includes('shoe')) {
+              dbQuery.category = 'shoes';
+            } else if (foundCategory.includes('jacket')) {
+              dbQuery.category = 'jackets';
+            } else if (foundCategory.includes('accessory')) {
+              dbQuery.category = 'accessories';
+            }
+          }
+          
+          // Search products from database with exact criteria
+          let products = await Product.find(dbQuery)
+            .select('title description category subCategory price.selling primaryImage rating.average brand.name variants tags features')
+            .lean();
+          
+          // Filter by color if specified
+          if (foundColor) {
+            products = products.filter(product => 
+              product.variants && product.variants.some(v => 
+                v.color.toLowerCase().includes(foundColor)
+              )
+            );
+          }
+          
+          // Limit to top 6 products
+          recommendedProducts = products.slice(0, 6);
+        }
+
+        // Create context-aware prompt with product information
+        let productContext = '';
+        if (recommendedProducts.length > 0) {
+          // Check if user is asking for specific colors
+          const colorKeywords = ['red', 'blue', 'black', 'white', 'green', 'brown', 'navy', 'gray', 'grey'];
+          const foundColor = colorKeywords.find(color => searchQuery.includes(color));
+          
+          if (foundColor) {
+            const productsWithColor = recommendedProducts.filter(product => 
+              product.variants.some(v => v.color.toLowerCase().includes(foundColor))
+            );
+            
+            if (productsWithColor.length > 0) {
+              productContext = `
+Available ${foundColor} products in our store:
+${productsWithColor.map((product, index) => {
+                const colorVariants = product.variants.filter(v => v.color.toLowerCase().includes(foundColor));
+                return `${index + 1}. ${product.title} - ${product.category} - £${product.price.selling} - Available in: ${colorVariants.map(v => v.color).join(', ')}`;
+              }).join('\n')}
+`;
+            }
+          } else {
+            productContext = `
+Available products in our store:
+${recommendedProducts.map((product, index) => 
+  `${index + 1}. ${product.title} - ${product.category} - £${product.price.selling} - ${product.brand.name}`
+).join('\n')}
+`;
+          }
+        }
+
         const systemPrompt = `
 You are Manvue's AI fashion assistant, an expert in men's fashion and style. You help customers with:
 
@@ -62,8 +335,13 @@ Guidelines:
 - Recommend products from our categories: shirts, t-shirts, jeans, trousers, chinos, shorts, jackets, blazers, suits, sweaters, hoodies, kurtas, sherwanis, ethnic wear, shoes, sneakers, formal shoes, boots, sandals, watches, belts, wallets, sunglasses, ties, bags, accessories
 - Consider occasions: casual, formal, sport, party, wedding, office, seasonal events
 - Keep responses under 200 words unless detailed explanation is needed
+- If the user asks about specific products or colors, mention the available products from our store
+- When showing color-specific products, be enthusiastic and highlight the color availability
+- Always mention the available colors for each product when relevant
 
 ${userPreferences}
+
+${productContext}
 
 Previous conversation context:
 ${context.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
@@ -73,7 +351,7 @@ Current user message: ${message}
 Respond as Manvue's fashion assistant:
 `;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
         const result = await model.generateContent(systemPrompt);
         const response = await result.response;
         botMessage = response.text();
@@ -90,6 +368,7 @@ Respond as Manvue's fashion assistant:
       success: true,
       data: {
         message: botMessage,
+        products: recommendedProducts,
         timestamp: new Date().toISOString()
       }
     });
@@ -147,7 +426,7 @@ Respond in JSON format:
 }
 `;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
     const analysisResult = await model.generateContent(analysisPrompt);
     const analysisResponse = await analysisResult.response;
     let analysis;
@@ -410,7 +689,7 @@ Format as JSON:
 }
 `;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
     const result = await model.generateContent(stylePrompt);
     const response = await result.response;
     let styleAdvice;
@@ -523,6 +802,19 @@ function generateRuleBasedResponse(message, user) {
     return "Great color combinations include: Navy with white or grey, black with almost any color, khaki with navy or white, and burgundy with grey. For a safe approach, stick to neutral base colors and add one accent color. What colors are you considering?";
   }
   
+  // Color-specific responses
+  if (normalizedMessage.includes('blue') && (normalizedMessage.includes('shirt') || normalizedMessage.includes('shirts'))) {
+    return "Perfect! I have some great blue shirts in our collection. We have classic and premium blue shirts available in various styles - from casual everyday wear to more formal options. Each shirt comes in multiple color variants including blue, so you can choose the perfect shade that matches your style. Would you like me to show you the available blue shirt options?";
+  }
+  
+  if (normalizedMessage.includes('red') && (normalizedMessage.includes('shirt') || normalizedMessage.includes('shirts'))) {
+    return "Excellent choice! We have stylish red shirts in our collection. Our red shirts come in different styles and fits, perfect for making a bold fashion statement. Each shirt is available in multiple color variants including red, so you can find the perfect shade. Would you like me to show you our red shirt collection?";
+  }
+  
+  if (normalizedMessage.includes('black') && (normalizedMessage.includes('shirt') || normalizedMessage.includes('shirts'))) {
+    return "Great selection! Black shirts are always a classic choice. We have elegant black shirts in our collection, perfect for both formal and casual occasions. Our black shirts come in various styles and are available in multiple color variants. Would you like me to show you our black shirt options?";
+  }
+
   // Specific product categories matching our actual inventory
   const categories = {
     'shirt': 'Check out our shirts collection! We have both casual and formal shirts in various styles. Our collection includes comfortable everyday shirts and professional formal options.',
@@ -659,125 +951,84 @@ router.post('/recommend-products', [
     }
 
     const { query, category, limit = 6 } = req.body;
-    const queryLower = query.toLowerCase();
-
-    // Build smart search query
-    const searchQuery = { isActive: true };
     
-    // Category mapping based on actual database categories
-    const categoryMap = {
-      'shirt': ['shirts'],
-      'shirts': ['shirts'],
-      'jeans': ['jeans'],
-      'formal': ['shirts', 'formal-shoes', 'formal', 'kurtas'], // Include formal category and formal ethnic wear
-      'casual': ['tshirts', 'jeans', 'shirts', 'accessories', 'shoes'],
-      'shoes': ['shoes', 'formal-shoes'],
-      'shoe': ['shoes', 'formal-shoes'],
-      'sneakers': ['shoes'],
-      'jacket': ['jackets'],
-      'jackets': ['jackets'],
-      'ethnic': ['kurtas'],
-      'kurtas': ['kurtas'],
-      'kurta': ['kurtas'],
-      'accessories': ['accessories'],
-      'accessory': ['accessories'],
-      'watch': ['accessories'],
-      'belt': ['accessories'],
-      'wallet': ['accessories'],
-      'trousers': ['formal', 'jeans'], // Map to formal and jeans as alternatives
-      'pants': ['formal', 'jeans'],
-      'tshirt': ['tshirts'],
-      't-shirt': ['tshirts'],
-      // Price-based queries - show all categories
-      'maximum price products': ['shirts', 'jeans', 'jackets', 'tshirts', 'formal-shoes', 'accessories', 'kurtas', 'formal', 'shoes'],
-      'minimum price products': ['shirts', 'jeans', 'jackets', 'tshirts', 'formal-shoes', 'accessories', 'kurtas', 'formal', 'shoes'],
-      'premium products': ['jackets', 'formal-shoes', 'kurtas', 'formal', 'shirts'],
-      'budget products': ['tshirts', 'accessories', 'shirts', 'jeans'],
-      'maximum prize products': ['shirts', 'jeans', 'jackets', 'tshirts', 'formal-shoes', 'accessories', 'kurtas', 'formal', 'shoes'],
-      'minimum prize products': ['shirts', 'jeans', 'jackets', 'tshirts', 'formal-shoes', 'accessories', 'kurtas', 'formal', 'shoes']
-    };
-
-    // Find matching categories
-    let targetCategories = [];
-    if (category) {
-      targetCategories = categoryMap[category] || [category];
-    } else {
-      // Auto-detect categories from query
-      Object.entries(categoryMap).forEach(([key, categories]) => {
-        if (queryLower.includes(key)) {
-          targetCategories.push(...categories);
-        }
-      });
-    }
-
-    if (targetCategories.length > 0) {
-      searchQuery.category = { $in: targetCategories };
-    }
-
-    // Text search for more specific matching
-    if (query.length > 3) {
-      searchQuery.$text = { $search: query };
-    }
-
-    // Subcategory filters
-    if (queryLower.includes('formal') || queryLower.includes('office') || queryLower.includes('business') || queryLower.includes('professional')) {
-      searchQuery.subCategory = 'formal';
-    } else if (queryLower.includes('casual') || queryLower.includes('everyday') || queryLower.includes('relaxed')) {
-      searchQuery.subCategory = 'casual';
-    }
+    // Use vector search for better semantic matching
+    let products = await searchProductsWithVector(query, parseInt(limit));
     
-    // Special handling for formal wear - include both formal subcategory and formal category
-    if (queryLower.includes('formal') || queryLower.includes('office') || queryLower.includes('business')) {
-      if (!searchQuery.category) {
-        searchQuery.$or = [
-          { subCategory: 'formal' },
-          { category: 'formal' },
-          { category: 'formal-shoes' }
-        ];
-      }
-    }
-
-    // Price filters and sorting for budget queries (including common typos)
-    let sortCriteria = { 'rating.average': -1, soldCount: -1, isFeatured: -1 };
-    
-    if (queryLower.includes('budget') || queryLower.includes('cheap') || queryLower.includes('affordable') || 
-        queryLower.includes('minimum price') || queryLower.includes('lowest price') ||
-        queryLower.includes('minimum prize') || queryLower.includes('lowest prize')) {
-      searchQuery['price.selling'] = { $lt: 30 };
-      sortCriteria = { 'price.selling': 1 }; // Sort by price ascending (cheapest first)
-    } else if (queryLower.includes('premium') || queryLower.includes('expensive') || queryLower.includes('luxury') || 
-               queryLower.includes('maximum price') || queryLower.includes('highest price') ||
-               queryLower.includes('maximum prize') || queryLower.includes('highest prize') ||
-               queryLower.includes('max price') || queryLower.includes('max prize')) {
-      searchQuery['price.selling'] = { $gt: 30 };
-      sortCriteria = { 'price.selling': -1 }; // Sort by price descending (most expensive first)
-    }
-
-    // Execute search with fallbacks
-    let products = await Product.find(searchQuery)
-      .select('title slug price.selling discount primaryImage rating.average category brand.name variants')
-      .sort(sortCriteria)
-      .limit(parseInt(limit));
-
-    // Fallback 1: If no products found, try broader category search
-    if (products.length === 0 && targetCategories.length > 0) {
-      products = await Product.find({
-        isActive: true,
-        category: { $in: targetCategories }
-      })
-        .select('title slug price.selling discount primaryImage rating.average category brand.name variants')
-        .sort({ 'rating.average': -1, isFeatured: -1 })
-        .limit(parseInt(limit));
-    }
-
-    // Fallback 2: Show featured products if still no matches
+    // If no products found with vector search, try traditional search
     if (products.length === 0) {
-      products = await Product.find({
-        isActive: true,
-        isFeatured: true
-      })
-        .select('title slug price.selling discount primaryImage rating.average category brand.name variants')
-        .sort({ 'rating.average': -1 })
+      const queryLower = query.toLowerCase();
+      const searchQuery = { isActive: true };
+      
+      // Category mapping based on actual database categories
+      const categoryMap = {
+        'shirt': ['shirts'],
+        'shirts': ['shirts'],
+        'jeans': ['jeans'],
+        'formal': ['shirts', 'formal-shoes', 'formal', 'kurtas'],
+        'casual': ['tshirts', 'jeans', 'shirts', 'accessories', 'shoes'],
+        'shoes': ['shoes', 'formal-shoes'],
+        'shoe': ['shoes', 'formal-shoes'],
+        'sneakers': ['shoes'],
+        'jacket': ['jackets'],
+        'jackets': ['jackets'],
+        'ethnic': ['kurtas'],
+        'kurtas': ['kurtas'],
+        'kurta': ['kurtas'],
+        'accessories': ['accessories'],
+        'accessory': ['accessories'],
+        'watch': ['accessories'],
+        'belt': ['accessories'],
+        'wallet': ['accessories'],
+        'trousers': ['formal', 'jeans'],
+        'pants': ['formal', 'jeans'],
+        'tshirt': ['tshirts'],
+        't-shirt': ['tshirts'],
+        'red': ['shirts', 'tshirts', 'jackets', 'kurtas'],
+        'blue': ['shirts', 'tshirts', 'jeans', 'jackets'],
+        'black': ['shirts', 'tshirts', 'jeans', 'shoes', 'jackets'],
+        'white': ['shirts', 'tshirts'],
+        'green': ['shirts', 'tshirts', 'jackets'],
+        'brown': ['shoes', 'jackets', 'belts'],
+        'navy': ['shirts', 'tshirts', 'jackets'],
+        'gray': ['shirts', 'tshirts', 'jackets'],
+        'grey': ['shirts', 'tshirts', 'jackets']
+      };
+
+      // Find matching categories
+      let targetCategories = [];
+      if (category) {
+        targetCategories = categoryMap[category] || [category];
+      } else {
+        // Auto-detect categories from query
+        Object.entries(categoryMap).forEach(([key, categories]) => {
+          if (queryLower.includes(key)) {
+            targetCategories.push(...categories);
+          }
+        });
+      }
+
+      if (targetCategories.length > 0) {
+        searchQuery.category = { $in: targetCategories };
+      }
+
+      // Text search for more specific matching
+      if (query.length > 3) {
+        searchQuery.$text = { $search: query };
+      }
+
+      // Price filters
+      if (queryLower.includes('budget') || queryLower.includes('cheap') || queryLower.includes('affordable') || 
+          queryLower.includes('minimum price') || queryLower.includes('lowest price')) {
+        searchQuery['price.selling'] = { $lt: 30 };
+      } else if (queryLower.includes('premium') || queryLower.includes('expensive') || queryLower.includes('luxury') || 
+                 queryLower.includes('maximum price') || queryLower.includes('highest price')) {
+        searchQuery['price.selling'] = { $gt: 30 };
+      }
+
+      products = await Product.find(searchQuery)
+        .select('title slug price.selling discount primaryImage rating.average category brand.name variants tags features')
+        .sort({ 'rating.average': -1, soldCount: -1 })
         .limit(parseInt(limit));
     }
 
@@ -791,7 +1042,12 @@ router.post('/recommend-products', [
       category: product.category,
       brand: product.brand,
       rating: product.rating,
-      discount: product.discount
+      discount: product.discount,
+      tags: product.tags || [],
+      features: product.features || [],
+      variants: product.variants || [],
+      description: product.description,
+      _id: product._id
     }));
 
     res.json({
@@ -799,8 +1055,7 @@ router.post('/recommend-products', [
       data: {
         products: formattedProducts,
         query,
-        totalFound: products.length,
-        categories: targetCategories
+        totalFound: products.length
       }
     });
 

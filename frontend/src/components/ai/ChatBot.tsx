@@ -33,6 +33,7 @@ interface Message {
     primaryImage: string
     slug: string
   }>
+  userQuery?: string
 }
 
 interface VoiceRecognition {
@@ -100,13 +101,14 @@ export default function ChatBot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const addMessage = (type: 'user' | 'bot', content: string, products?: any[]) => {
+  const addMessage = (type: 'user' | 'bot', content: string, products?: any[], userQuery?: string) => {
     const newMessage: Message = {
       id: Date.now().toString(),
       type,
       content,
       timestamp: new Date(),
-      products
+      products,
+      userQuery
     }
     setMessages(prev => [...prev, newMessage])
   }
@@ -132,45 +134,15 @@ export default function ChatBot() {
       })
 
       const botResponse = response.data.data.message
-      addMessage('bot', botResponse)
+      const products = response.data.data.products || []
+      
+      if (products.length > 0) {
+        addMessage('bot', botResponse, products, message)
+      } else {
+        addMessage('bot', botResponse, undefined, message)
+      }
 
-      // Intelligent product recommendation triggering
-      const shouldShowProducts = (
-        botResponse.toLowerCase().includes('recommend') || 
-        botResponse.toLowerCase().includes('suggest') ||
-        botResponse.toLowerCase().includes('show you') ||
-        botResponse.toLowerCase().includes('collection') ||
-        botResponse.toLowerCase().includes('options') ||
-        botResponse.toLowerCase().includes('pieces') ||
-        botResponse.toLowerCase().includes('items')
-      )
-      
-      if (shouldShowProducts) {
-        // Extract potential search terms from the conversation
-        const searchTerms = extractSearchTerms(message + ' ' + botResponse)
-        if (searchTerms) {
-          setTimeout(() => fetchRecommendedProducts(searchTerms), 500)
-        }
-      }
-      
-      // Smart detection of direct product queries
-      const userSearchTerms = extractSearchTerms(message)
-      const isDirectProductQuery = (
-        message.toLowerCase().includes('show me') ||
-        message.toLowerCase().includes('find me') ||
-        message.toLowerCase().includes('looking for') ||
-        message.toLowerCase().includes('need') ||
-        message.toLowerCase().includes('want') ||
-        message.toLowerCase().includes('maximum') ||
-        message.toLowerCase().includes('minimum') ||
-        message.toLowerCase().includes('premium') ||
-        message.toLowerCase().includes('budget') ||
-        /\b(shirts?|jeans?|shoes?|accessories?)\b/.test(message.toLowerCase())
-      )
-      
-      if (userSearchTerms && isDirectProductQuery) {
-        setTimeout(() => fetchRecommendedProducts(userSearchTerms), 800)
-      }
+      // No additional random recommendations - only show products from database search
 
     } catch (error) {
       console.error('Chat error:', error)
@@ -450,55 +422,91 @@ export default function ChatBot() {
                       {/* Product recommendations */}
                       {message.products && message.products.length > 0 && (
                         <div className="mt-3 space-y-2">
-                          {message.products.map((product) => (
-                            <div key={product.id} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200 hover:border-gray-300 transition-colors">
-                              <div className="flex items-center space-x-3">
-                                <div className="flex-shrink-0">
-                                  <img
-                                    src={product.primaryImage || '/placeholder-image.jpg'}
-                                    alt={product.title}
-                                    className="w-16 h-16 rounded-md object-cover"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).src = '/placeholder-image.jpg'
-                                    }}
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate" title={product.title}>
-                                    {product.title}
-                                  </p>
-                                  <p className="text-xs text-gray-500 capitalize">
-                                    {product.category || 'Fashion'}
-                                  </p>
-                                  <div className="flex items-center space-x-2 mt-1">
-                                    <p className="text-sm text-blue-600 font-bold">
-                                      {formatPrice(product.price?.selling || product.price)}
+                          {message.products.map((product) => {
+                            // Find the best color variant to display
+                            const getBestVariantImage = (product) => {
+                              if (!product.variants || product.variants.length === 0) {
+                                return product.primaryImage || '/placeholder-image.jpg';
+                              }
+                              
+                              // If searching for a specific color, try to find that variant
+                              const searchQuery = (message.userQuery || message.content).toLowerCase();
+                              const colorKeywords = ['red', 'blue', 'black', 'white', 'green', 'brown', 'navy', 'gray', 'grey'];
+                              const foundColor = colorKeywords.find(color => searchQuery.includes(color));
+                              
+                              if (foundColor) {
+                                const colorVariant = product.variants.find(v => 
+                                  v.color.toLowerCase().includes(foundColor)
+                                );
+                                if (colorVariant && colorVariant.images && colorVariant.images.length > 0) {
+                                  return colorVariant.images[0].url;
+                                }
+                              }
+                              
+                              // Fallback to primary image or first variant image
+                              const primaryVariant = product.variants.find(v => v.images && v.images.some(img => img.isPrimary));
+                              if (primaryVariant && primaryVariant.images && primaryVariant.images.length > 0) {
+                                return primaryVariant.images[0].url;
+                              }
+                              
+                              return product.variants[0]?.images?.[0]?.url || product.primaryImage || '/placeholder-image.jpg';
+                            };
+                            
+                            const availableColors = product.variants ? product.variants.map(v => v.color).join(', ') : 'Default';
+                            
+                            return (
+                              <div key={product.id} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200 hover:border-gray-300 transition-colors">
+                                <div className="flex items-center space-x-3">
+                                  <div className="flex-shrink-0">
+                                    <img
+                                      src={getBestVariantImage(product)}
+                                      alt={product.title}
+                                      className="w-16 h-16 rounded-md object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = '/placeholder-image.jpg'
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate" title={product.title}>
+                                      {product.title}
                                     </p>
-                                    {product.rating?.average && (
-                                      <div className="flex items-center">
-                                        <span className="text-xs text-yellow-500">★</span>
-                                        <span className="text-xs text-gray-600 ml-1">
-                                          {product.rating.average.toFixed(1)}
-                                        </span>
-                                      </div>
-                                    )}
+                                    <p className="text-xs text-gray-500 capitalize">
+                                      {product.category || 'Fashion'}
+                                    </p>
+                                    <p className="text-xs text-gray-400">
+                                      Colors: {availableColors}
+                                    </p>
+                                    <div className="flex items-center space-x-2 mt-1">
+                                      <p className="text-sm text-blue-600 font-bold">
+                                        {formatPrice(product.price?.selling || product.price)}
+                                      </p>
+                                      {product.rating?.average && (
+                                        <div className="flex items-center">
+                                          <span className="text-xs text-yellow-500">★</span>
+                                          <span className="text-xs text-gray-600 ml-1">
+                                            {product.rating.average.toFixed(1)}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex-shrink-0">
+                                    <a
+                                      href={`/product/${product.slug}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-block"
+                                    >
+                                      <Button size="sm" variant="outline" className="text-xs px-3">
+                                        View
+                                      </Button>
+                                    </a>
                                   </div>
                                 </div>
-                                <div className="flex-shrink-0">
-                                  <a
-                                    href={`/product/${product.slug}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-block"
-                                  >
-                                    <Button size="sm" variant="outline" className="text-xs px-3">
-                                      View
-                                    </Button>
-                                  </a>
-                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                           <div className="text-center mt-2">
                             <a 
                               href="/products" 
