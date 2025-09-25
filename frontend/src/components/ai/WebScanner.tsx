@@ -129,7 +129,7 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
 
   if (!isOpen) {
     return (
-      <div className={`fixed ${isAboveChatBot ? 'bottom-24' : 'bottom-6'} right-6 z-[9999]`} style={{ position: 'fixed', isolation: 'isolate' }}>
+      <div className="fixed bottom-6 left-6 z-[9999]" style={{ position: 'fixed', isolation: 'isolate' }}>
         <Button
           onClick={() => setIsOpen(true)}
           className="rounded-full w-16 h-16 shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 border-2 border-yellow-400"
@@ -143,7 +143,7 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
   }
 
   return (
-    <div className={`fixed ${isAboveChatBot ? 'bottom-24' : 'bottom-6'} right-6 z-[9999] transition-all duration-200 ${
+    <div className={`fixed bottom-6 left-6 z-[9999] transition-all duration-200 ${
       isMinimized ? 'w-80 h-16' : 'w-[600px] h-[500px]'
     }`} style={{ position: 'fixed', pointerEvents: 'auto' }}>
       <Card className="h-full shadow-2xl bg-gray-900 border-2 border-orange-400" style={{ position: 'relative', zIndex: 1, isolation: 'isolate' }}>

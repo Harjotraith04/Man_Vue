@@ -119,27 +119,27 @@ export default function HomePage() {
         {/* Subtle Matrix Background */}
         <div className="absolute inset-0 matrix-bg opacity-15" />
         
-        <div className="container mx-auto px-4 py-24 relative z-10">
+        <div className="container mx-auto px-4 pb-16 relative z-10 -mt-4">
           <div className="max-w-6xl mx-auto text-center">
-            <h1 className="text-7xl md:text-9xl font-bold mb-12 leading-tight animate-slide-in-glow">
+            <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight animate-slide-in-glow">
               <span className="block holographic glitch-effect">Redefine Your</span>
               <span className="block bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-bounce-glow neon-border p-4 rounded-2xl">
                 Style Story
               </span>
             </h1>
-            <p className="text-2xl md:text-4xl text-gray-300 mb-16 leading-relaxed max-w-4xl mx-auto animate-fade-in-up">
+            <p className="text-xl md:text-3xl text-gray-300 mb-12 leading-relaxed max-w-4xl mx-auto animate-fade-in-up">
               🚀 Discover premium men's fashion with AI-powered recommendations, 
               AR try-ons, and immersive shopping experiences that redefine modern style.
             </p>
-            <div className="flex flex-col sm:flex-row gap-8 justify-center">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Link to="/products">
-                <Button size="lg" className="text-2xl px-16 py-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-110 morph-button neon-border animate-bounce-glow rounded-2xl">
+                <Button size="lg" className="text-xl px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-110 morph-button neon-border animate-bounce-glow rounded-2xl">
                   🛍️ Explore Collection
-                  <ArrowRight className="ml-4 h-8 w-8" />
+                  <ArrowRight className="ml-3 h-6 w-6" />
                 </Button>
               </Link>
               <Link to="/vr-gallery">
-                <Button size="lg" variant="outline" className="text-2xl px-16 py-8 text-white border-4 border-purple-400 hover:bg-purple-600 hover:text-white transition-all duration-300 transform hover:scale-110 morph-button hover-neon-purple rounded-2xl">
+                <Button size="lg" variant="outline" className="text-xl px-12 py-6 text-white border-4 border-purple-400 hover:bg-purple-600 hover:text-white transition-all duration-300 transform hover:scale-110 morph-button hover-neon-purple rounded-2xl">
                   🥽 Try VR Gallery
                 </Button>
               </Link>

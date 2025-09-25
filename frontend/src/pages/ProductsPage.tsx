@@ -386,7 +386,7 @@ export default function ProductsPage() {
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className={viewMode === 'grid' ? 'bg-white shadow-sm' : ''}
+                className={viewMode === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900'}
               >
                 <Grid className="h-4 w-4" />
               </Button>
@@ -394,7 +394,7 @@ export default function ProductsPage() {
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className={viewMode === 'list' ? 'bg-white shadow-sm' : ''}
+                className={viewMode === 'list' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600 hover:text-gray-900'}
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -404,7 +404,7 @@ export default function ProductsPage() {
             <select
               value={filters.sortBy}
               onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-              className="border-2 border-gray-200 rounded-xl px-4 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
+              className="border-2 border-gray-200 rounded-xl px-4 py-2 bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
             >
               {sortOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -419,10 +419,10 @@ export default function ProductsPage() {
       <div className="flex gap-8">
         {/* Filters Sidebar */}
         <div className={`lg:w-64 flex-shrink-0 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-          <Card className="p-6 sticky top-4">
+          <Card className="p-6 sticky top-4 bg-gray-900 border-gray-700">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold">Filters</h3>
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <h3 className="text-lg font-semibold text-white">Filters</h3>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-white hover:text-gray-300">
                 Clear All
               </Button>
             </div>
@@ -430,11 +430,11 @@ export default function ProductsPage() {
             <div className="space-y-6">
               {/* Category */}
               <div>
-                <h4 className="font-medium mb-3">Category</h4>
+                <h4 className="font-medium mb-3 text-white">Category</h4>
                 <select
                   value={filters.category}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="w-full border-2 border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="">All Categories</option>
                   {categories.map(category => (
@@ -447,11 +447,11 @@ export default function ProductsPage() {
 
               {/* Sub Category */}
               <div>
-                <h4 className="font-medium mb-3">Style</h4>
+                <h4 className="font-medium mb-3 text-white">Style</h4>
                 <select
                   value={filters.subCategory}
                   onChange={(e) => handleFilterChange('subCategory', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  className="w-full border-2 border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 >
                   <option value="">All Styles</option>
                   {subCategories.map(subCategory => (
@@ -464,28 +464,28 @@ export default function ProductsPage() {
 
               {/* Price Range */}
               <div>
-                <h4 className="font-medium mb-3">Price Range</h4>
+                <h4 className="font-medium mb-3 text-white">Price Range</h4>
                 <div className="flex space-x-2">
                   <Input
                     type="number"
                     placeholder="Min"
                     value={filters.minPrice}
                     onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                    className="text-sm"
+                    className="text-sm bg-white text-gray-900 border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                   <Input
                     type="number"
                     placeholder="Max"
                     value={filters.maxPrice}
                     onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                    className="text-sm"
+                    className="text-sm bg-white text-gray-900 border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
               </div>
 
               {/* Quick Filters */}
               <div>
-                <h4 className="font-medium mb-3">Quick Filters</h4>
+                <h4 className="font-medium mb-3 text-white">Quick Filters</h4>
                 <div className="space-y-2">
                   <label className="flex items-center">
                     <input
@@ -494,7 +494,7 @@ export default function ProductsPage() {
                       onChange={(e) => handleFilterChange('inStock', e.target.checked)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="ml-2 text-sm">In Stock Only</span>
+                    <span className="ml-2 text-sm text-white">In Stock Only</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -503,7 +503,7 @@ export default function ProductsPage() {
                       onChange={(e) => handleFilterChange('featured', e.target.checked)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="ml-2 text-sm">Featured Products</span>
+                    <span className="ml-2 text-sm text-white">Featured Products</span>
                   </label>
                 </div>
               </div>
@@ -553,7 +553,7 @@ export default function ProductsPage() {
             </div>
           ) : (
             <>
-              <div className="mb-4 text-sm text-gray-600">
+              <div className="mb-4 text-sm text-white font-medium">
                 Showing {products.length} products
               </div>
               
@@ -565,17 +565,17 @@ export default function ProductsPage() {
                       {products.length} Products Found
                     </div>
                     {filters.category && (
-                      <div className="bg-white px-3 py-1 rounded-full text-sm font-medium border border-blue-300">
+                      <div className="bg-white px-3 py-1 rounded-full text-sm font-medium border border-blue-300 text-gray-900">
                         📂 {filters.category.charAt(0).toUpperCase() + filters.category.slice(1)}
                       </div>
                     )}
                     {filters.search && (
-                      <div className="bg-white px-3 py-1 rounded-full text-sm font-medium border border-blue-300">
+                      <div className="bg-white px-3 py-1 rounded-full text-sm font-medium border border-blue-300 text-gray-900">
                         🔍 "{filters.search}"
                       </div>
                     )}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-700 font-medium">
                     Viewing {viewMode === 'grid' ? 'Grid' : 'List'} View
                   </div>
                 </div>

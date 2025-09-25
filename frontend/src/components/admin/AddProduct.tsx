@@ -329,7 +329,7 @@ export default function AddProduct({ onClose, onSuccess }: AddProductProps) {
                   <select
                     value={form.category}
                     onChange={(e) => setForm(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   >
                     <option value="">Select category</option>
@@ -345,7 +345,7 @@ export default function AddProduct({ onClose, onSuccess }: AddProductProps) {
                   <select
                     value={form.subCategory}
                     onChange={(e) => setForm(prev => ({ ...prev, subCategory: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select sub category</option>
                     {subCategories.map(subCat => (
@@ -584,7 +584,7 @@ export default function AddProduct({ onClose, onSuccess }: AddProductProps) {
                       ...prev, 
                       specifications: { ...prev.specifications, fit: e.target.value }
                     }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     {fitOptions.map(fit => (
                       <option key={fit} value={fit}>
