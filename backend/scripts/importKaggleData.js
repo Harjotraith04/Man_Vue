@@ -11,37 +11,37 @@ const CATEGORY_MAPPING = {
   'Accessories': {
     category: 'accessories',
     subCategory: 'casual',
-    basePrice: { original: 1499, selling: 999 }
+    basePrice: { original: 15, selling: 10 }
   },
   'Ethnic': {
     category: 'kurtas',
     subCategory: 'formal',
-    basePrice: { original: 2999, selling: 2199 }
+    basePrice: { original: 30, selling: 22 }
   },
   'Formal': {
     category: 'formal',
     subCategory: 'formal',
-    basePrice: { original: 2499, selling: 1899 }
+    basePrice: { original: 25, selling: 19 }
   },
   'Jeans': {
     category: 'jeans',
     subCategory: 'casual',
-    basePrice: { original: 3499, selling: 2599 }
+    basePrice: { original: 35, selling: 26 }
   },
   'Shirts': {
     category: 'shirts',
     subCategory: 'casual',
-    basePrice: { original: 1999, selling: 1499 }
+    basePrice: { original: 20, selling: 15 }
   },
   'Shoes': {
     category: 'shoes',
     subCategory: 'casual',
-    basePrice: { original: 4999, selling: 3499 }
+    basePrice: { original: 50, selling: 35 }
   },
   'T-Shirts': {
     category: 'tshirts',
     subCategory: 'casual',
-    basePrice: { original: 899, selling: 699 }
+    basePrice: { original: 9, selling: 7 }
   }
 };
 
@@ -59,7 +59,7 @@ const BRAND_MAPPING = {
 // Generate product specifications based on category
 function generateSpecifications(categoryInfo, folderName) {
   const baseSpecs = {
-    origin: 'India',
+    origin: 'UK',
     care: 'Follow care label instructions'
   };
 
@@ -347,7 +347,7 @@ async function importKaggleData() {
             price: {
               original: categoryInfo.basePrice.original,
               selling: categoryInfo.basePrice.selling,
-              currency: 'INR'
+              currency: 'GBP'
             },
             discount: {
               percentage: Math.round(((categoryInfo.basePrice.original - categoryInfo.basePrice.selling) / categoryInfo.basePrice.original) * 100),

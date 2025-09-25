@@ -119,7 +119,7 @@ router.post('/', [
         method: payment.method,
         status: payment.method === 'cod' ? 'pending' : 'processing',
         amountPaid: payment.method === 'cod' ? 0 : 0, // Will be updated after payment
-        currency: 'INR'
+        currency: 'GBP'
       },
       shipping: {
         method: shipping.method,

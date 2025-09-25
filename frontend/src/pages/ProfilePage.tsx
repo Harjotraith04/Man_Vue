@@ -22,7 +22,7 @@ export default function ProfilePage() {
       city: '',
       state: '',
       zipCode: '',
-      country: 'India'
+      country: 'UK'
     }
   })
 
@@ -62,7 +62,7 @@ export default function ProfilePage() {
           city: userProfile.address?.city || '',
           state: userProfile.address?.state || '',
           zipCode: userProfile.address?.zipCode || '',
-          country: userProfile.address?.country || 'India'
+          country: userProfile.address?.country || 'UK'
         }
       })
 
@@ -88,7 +88,7 @@ export default function ProfilePage() {
             city: user.address?.city || '',
             state: user.address?.state || '',
             zipCode: user.address?.zipCode || '',
-            country: user.address?.country || 'India'
+            country: user.address?.country || 'UK'
           }
         })
       }

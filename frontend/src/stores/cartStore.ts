@@ -233,7 +233,7 @@ export const useCartStore = create<CartStore>()(
         
         const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0)
         const tax = subtotal * 0.18 // 18% GST
-        const shipping = subtotal > 1000 ? 0 : 99 // Free shipping above ₹1000
+        const shipping = subtotal > 50 ? 0 : 5 // Free shipping above £50
         const total = subtotal + tax + shipping
         const itemCount = items.length
         const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)

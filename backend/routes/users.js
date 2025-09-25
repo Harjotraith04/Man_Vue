@@ -61,7 +61,7 @@ router.get('/cart', auth, async (req, res) => {
     });
 
     const tax = subtotal * 0.18; // 18% GST
-    const shipping = subtotal > 1000 ? 0 : 99; // Free shipping above ₹1000
+    const shipping = subtotal > 50 ? 0 : 5; // Free shipping above £50
     const total = subtotal + tax + shipping;
 
     res.json({

@@ -267,7 +267,7 @@ The AI chatbot provides personalized fashion advice:
 
 ### Voice Shopping
 Voice-activated shopping experience:
-- "Show me casual shirts under ₹2000"
+- "Show me casual shirts under £20"
 - "Find blue jeans in size 32"
 - Natural language product search
 

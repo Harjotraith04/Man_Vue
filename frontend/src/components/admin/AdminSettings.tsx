@@ -278,7 +278,7 @@ export default function AdminSettings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Default Shipping Rate (₹)</label>
+                  <label className="block text-sm font-medium mb-2">Default Shipping Rate (£)</label>
                   <Input
                     type="number"
                     value={systemSettings.defaultShippingRate}
@@ -417,7 +417,7 @@ export default function AdminSettings() {
                     <div className="text-sm text-gray-600">Total Products</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">₹{systemStats.totalRevenue}</div>
+                    <div className="text-2xl font-bold text-orange-600">£{systemStats.totalRevenue}</div>
                     <div className="text-sm text-gray-600">Total Revenue</div>
                   </div>
                 </div>

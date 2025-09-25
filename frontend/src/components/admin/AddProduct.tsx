@@ -612,7 +612,7 @@ export default function AddProduct({ onClose, onSuccess }: AddProductProps) {
                       ...prev, 
                       specifications: { ...prev.specifications, origin: e.target.value }
                     }))}
-                    placeholder="e.g., Made in India"
+                    placeholder="e.g., Made in UK"
                   />
                 </div>
               </div>

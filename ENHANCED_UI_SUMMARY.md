@@ -73,7 +73,7 @@
 #### **Product Information**
 - ✅ Product titles from import script
 - ✅ Brand names (ManVue Accessories, ManVue Ethnic, etc.)
-- ✅ Realistic pricing (₹699-₹9999 range)
+- ✅ Realistic pricing (£7-£100 range)
 - ✅ Stock levels and availability
 - ✅ Ratings and review counts
 - ✅ Discount badges and percentages

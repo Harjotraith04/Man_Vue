@@ -368,7 +368,7 @@ router.post('/style-advice', [
 As Manvue's AI style advisor, provide comprehensive outfit recommendations for:
 
 Occasion: ${occasion}
-Budget: ${budget ? `₹${budget}` : 'Flexible'}
+Budget: ${budget ? `£${budget}` : 'Flexible'}
 Body type: ${bodyType || 'Not specified'}
 Preferences: ${JSON.stringify(preferences)}
 ${userContext}
@@ -414,7 +414,7 @@ Format as JSON:
             items: ["Button-down shirt", "Chinos", "Loafers"],
             colors: ["Navy", "White"],
             accessories: ["Leather belt", "Watch"],
-            estimated_cost: "₹3000-5000",
+            estimated_cost: "£30-50",
             styling_tip: "Keep it simple and well-fitted"
           }
         ],

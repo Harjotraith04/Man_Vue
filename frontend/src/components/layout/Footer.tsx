@@ -63,7 +63,7 @@ export default function Footer() {
     {
       icon: Truck,
       title: 'Free Shipping',
-      description: 'On orders above ₹1000'
+      description: 'On orders above £50'
     },
     {
       icon: RotateCcw,
@@ -136,11 +136,11 @@ export default function Footer() {
               </div>
               <div className="flex items-center">
                 <Phone className="h-4 w-4 mr-2" />
-                <span>+91 98765 43210</span>
+                <span>+44 07741855104</span>
               </div>
               <div className="flex items-center">
                 <MapPin className="h-4 w-4 mr-2" />
-                <span>Mumbai, India</span>
+                <span>London, UK</span>
               </div>
             </div>
           </div>

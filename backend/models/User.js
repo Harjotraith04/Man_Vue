@@ -44,7 +44,7 @@ const userSchema = new mongoose.Schema({
     city: { type: String, default: '' },
     state: { type: String, default: '' },
     zipCode: { type: String, default: '' },
-    country: { type: String, default: '' }
+    country: { type: String, default: 'UK' }
   },
   preferences: {
     newsletter: { type: Boolean, default: true },

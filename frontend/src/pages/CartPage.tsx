@@ -274,7 +274,7 @@ export default function CartPage() {
                 {shipping > 0 && (
                   <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      Add {formatPrice(1000 - subtotal)} more for free shipping
+                      Add {formatPrice(50 - subtotal)} more for free shipping
                     </p>
                   </div>
                 )}

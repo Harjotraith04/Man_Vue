@@ -98,7 +98,7 @@ const productSchema = new mongoose.Schema({
   price: {
     original: { type: Number, required: true, min: 0 },
     selling: { type: Number, required: true, min: 0 },
-    currency: { type: String, default: 'INR' }
+    currency: { type: String, default: 'GBP' }
   },
   discount: {
     percentage: { type: Number, min: 0, max: 100, default: 0 },

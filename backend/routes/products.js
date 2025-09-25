@@ -188,7 +188,7 @@ router.post('/', [
       price: {
         original: parseFloat(req.body['price.original']) || 0,
         selling: parseFloat(req.body['price.selling']) || 0,
-        currency: 'INR'
+        currency: 'GBP'
       },
       
       // Reconstruct brand object from flat fields  

@@ -47,7 +47,7 @@ const addressSchema = new mongoose.Schema({
   city: { type: String, required: true },
   state: { type: String, required: true },
   zipCode: { type: String, required: true },
-  country: { type: String, required: true, default: 'India' },
+  country: { type: String, required: true, default: 'UK' },
   landmark: { type: String, default: '' },
   isDefault: { type: Boolean, default: false }
 });
@@ -80,7 +80,7 @@ const paymentSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    default: 'INR'
+    default: 'GBP'
   },
   paidAt: {
     type: Date
@@ -156,8 +156,8 @@ const orderSchema = new mongoose.Schema({
     },
     provider: {
       type: String,
-      enum: ['dhl', 'fedex', 'ups', 'bluedart', 'dtdc', 'india_post'],
-      default: 'bluedart'
+      enum: ['dhl', 'fedex', 'ups', 'royal_mail', 'dtdc', 'uk_post'],
+      default: 'royal_mail'
     },
     trackingNumber: {
       type: String,

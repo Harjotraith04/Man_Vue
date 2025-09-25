@@ -15,9 +15,9 @@ const sampleUsers = [
     isEmailVerified: true
   },
   {
-    name: 'Harjot Singh',
-    email: 'harjots.raith@gmail.com',
-    googleId: 'google_harjot_123',
+    name: 'Sagar Jadhav',
+    email: 'sagar.jadhav@gmail.com',
+    googleId: 'google_sagar_123',
     role: 'user',
     isEmailVerified: true,
     preferences: {
@@ -54,7 +54,7 @@ const sampleProducts = [
     category: 'shirts',
     subCategory: 'formal',
     brand: { name: 'Manvue Essentials' },
-    price: { original: 2499, selling: 1999, currency: 'INR' },
+    price: { original: 25, selling: 20, currency: 'GBP' },
     discount: { percentage: 20, isActive: true },
     variants: [
       {
@@ -68,10 +68,10 @@ const sampleProducts = [
           }
         ],
         sizes: [
-          { size: 'S', stock: 15, price: 1999 },
-          { size: 'M', stock: 20, price: 1999 },
-          { size: 'L', stock: 18, price: 1999 },
-          { size: 'XL', stock: 12, price: 1999 }
+          { size: 'S', stock: 15, price: 20 },
+          { size: 'M', stock: 20, price: 20 },
+          { size: 'L', stock: 18, price: 20 },
+          { size: 'XL', stock: 12, price: 20 }
         ]
       }
     ],
@@ -82,7 +82,7 @@ const sampleProducts = [
       pattern: 'solid',
       sleeve: 'long sleeve',
       neckType: 'spread collar',
-      origin: 'India'
+      origin: 'UK'
     },
     tags: ['formal', 'office', 'classic', 'cotton', 'white'],
     features: ['Wrinkle resistant', 'Breathable fabric', 'Professional look'],
@@ -99,7 +99,7 @@ const sampleProducts = [
     category: 'jeans',
     subCategory: 'casual',
     brand: { name: 'Manvue Denim' },
-    price: { original: 3999, selling: 2999, currency: 'INR' },
+    price: { original: 40, selling: 30, currency: 'GBP' },
     discount: { percentage: 25, isActive: true },
     variants: [
       {
@@ -113,10 +113,10 @@ const sampleProducts = [
           }
         ],
         sizes: [
-          { size: '30', stock: 8, price: 2999 },
-          { size: '32', stock: 15, price: 2999 },
-          { size: '34', stock: 12, price: 2999 },
-          { size: '36', stock: 10, price: 2999 }
+          { size: '30', stock: 8, price: 30 },
+          { size: '32', stock: 15, price: 30 },
+          { size: '34', stock: 12, price: 30 },
+          { size: '36', stock: 10, price: 30 }
         ]
       }
     ],
@@ -125,7 +125,7 @@ const sampleProducts = [
       care: 'Machine wash cold inside out, hang dry',
       fit: 'slim',
       pattern: 'solid',
-      origin: 'India'
+      origin: 'UK'
     },
     tags: ['casual', 'denim', 'slim fit', 'stretch', 'everyday'],
     features: ['Stretch comfort', 'Fade resistant', 'Classic 5-pocket design'],
@@ -142,7 +142,7 @@ const sampleProducts = [
     category: 'jackets',
     subCategory: 'casual',
     brand: { name: 'Manvue Leather' },
-    price: { original: 12999, selling: 9999, currency: 'INR' },
+    price: { original: 130, selling: 100, currency: 'GBP' },
     discount: { percentage: 23, isActive: true },
     variants: [
       {
@@ -156,10 +156,10 @@ const sampleProducts = [
           }
         ],
         sizes: [
-          { size: 'S', stock: 5, price: 9999 },
-          { size: 'M', stock: 8, price: 9999 },
-          { size: 'L', stock: 6, price: 9999 },
-          { size: 'XL', stock: 4, price: 9999 }
+          { size: 'S', stock: 5, price: 100 },
+          { size: 'M', stock: 8, price: 100 },
+          { size: 'L', stock: 6, price: 100 },
+          { size: 'XL', stock: 4, price: 100 }
         ]
       }
     ],
@@ -168,7 +168,7 @@ const sampleProducts = [
       care: 'Professional leather cleaning only',
       fit: 'regular',
       pattern: 'solid',
-      origin: 'India'
+      origin: 'UK'
     },
     tags: ['jacket', 'leather', 'biker', 'edgy', 'premium'],
     features: ['Genuine leather', 'YKK zippers', 'Quilted shoulders', 'Multiple pockets'],
@@ -184,7 +184,7 @@ const sampleProducts = [
     category: 'tshirts',
     subCategory: 'casual',
     brand: { name: 'Manvue Basics' },
-    price: { original: 899, selling: 699, currency: 'INR' },
+    price: { original: 9, selling: 7, currency: 'GBP' },
     discount: { percentage: 22, isActive: true },
     variants: [
       {
@@ -198,10 +198,10 @@ const sampleProducts = [
           }
         ],
         sizes: [
-          { size: 'S', stock: 25, price: 699 },
-          { size: 'M', stock: 30, price: 699 },
-          { size: 'L', stock: 28, price: 699 },
-          { size: 'XL', stock: 20, price: 699 }
+          { size: 'S', stock: 25, price: 7 },
+          { size: 'M', stock: 30, price: 7 },
+          { size: 'L', stock: 28, price: 7 },
+          { size: 'XL', stock: 20, price: 7 }
         ]
       }
     ],
@@ -212,7 +212,7 @@ const sampleProducts = [
       pattern: 'solid',
       sleeve: 'short sleeve',
       neckType: 'crew neck',
-      origin: 'India'
+      origin: 'UK'
     },
     tags: ['tshirt', 'casual', 'cotton', 'basic', 'everyday'],
     features: ['Soft cotton fabric', 'Pre-shrunk', 'Comfortable fit'],
@@ -228,7 +228,7 @@ const sampleProducts = [
     category: 'formal-shoes',
     subCategory: 'formal',
     brand: { name: 'Manvue Footwear' },
-    price: { original: 4999, selling: 3999, currency: 'INR' },
+    price: { original: 50, selling: 40, currency: 'GBP' },
     discount: { percentage: 20, isActive: true },
     variants: [
       {
@@ -242,11 +242,11 @@ const sampleProducts = [
           }
         ],
         sizes: [
-          { size: '7', stock: 6, price: 3999 },
-          { size: '8', stock: 10, price: 3999 },
-          { size: '9', stock: 12, price: 3999 },
-          { size: '10', stock: 8, price: 3999 },
-          { size: '11', stock: 5, price: 3999 }
+          { size: '7', stock: 6, price: 40 },
+          { size: '8', stock: 10, price: 40 },
+          { size: '9', stock: 12, price: 40 },
+          { size: '10', stock: 8, price: 40 },
+          { size: '11', stock: 5, price: 40 }
         ]
       }
     ],
@@ -255,7 +255,7 @@ const sampleProducts = [
       care: 'Wipe with dry cloth, use leather conditioner',
       fit: 'regular',
       pattern: 'solid',
-      origin: 'India'
+      origin: 'UK'
     },
     tags: ['shoes', 'formal', 'leather', 'oxford', 'office'],
     features: ['Genuine leather upper', 'Cushioned insole', 'Non-slip sole', 'Classic design'],
@@ -299,7 +299,7 @@ function generateSampleOrders(users, products) {
     
     const subtotal = selectedProducts.reduce((sum, item) => sum + item.totalPrice, 0);
     const tax = Math.round(subtotal * 0.18); // 18% GST
-    const shipping = subtotal > 1000 ? 0 : 50; // Free shipping above ₹1000
+    const shipping = subtotal > 50 ? 0 : 5; // Free shipping above £50
     const total = subtotal + tax + shipping;
     
     // Assign random status based on order age
@@ -326,23 +326,23 @@ function generateSampleOrders(users, products) {
       },
       shippingAddress: {
         name: customerUser.name,
-        phone: '+91 9876543210',
+        phone: '+44 07741855104',
         email: customerUser.email,
         street: '123 Sample Street',
-        city: 'Mumbai',
+        city: 'London',
         state: 'Maharashtra',
         zipCode: '400001',
-        country: 'India'
+        country: 'UK'
       },
       billingAddress: {
         name: customerUser.name,
-        phone: '+91 9876543210',
+        phone: '+44 07741855104',
         email: customerUser.email,
         street: '123 Sample Street',
-        city: 'Mumbai',
+        city: 'London',
         state: 'Maharashtra',
         zipCode: '400001',
-        country: 'India'
+        country: 'UK'
       },
       payment: {
         method: ['card', 'upi', 'netbanking'][Math.floor(Math.random() * 3)],
@@ -350,7 +350,7 @@ function generateSampleOrders(users, products) {
         transactionId: `TXN${Date.now().toString().slice(-8)}`,
         paymentGateway: 'razorpay',
         amountPaid: total,
-        currency: 'INR',
+        currency: 'GBP',
         paidAt: status !== 'cancelled' ? orderDate : undefined
       },
       shipping: {
@@ -455,7 +455,7 @@ async function seedDatabase() {
     console.log(`   👤 Test User: john@example.com (password: password123)`);
     console.log(`   🛍️ Products: ${createdProducts.length} sample products`);
     console.log(`   📦 Orders: ${createdOrders.length} sample orders`);
-    console.log(`   💰 Total Revenue: ₹${totalRevenue.toLocaleString('en-IN')}`);
+    console.log(`   💰 Total Revenue: £${totalRevenue.toLocaleString('en-GB')}`);
     console.log(`   🏷️ Categories: shirts, jeans, jackets, tshirts, formal-shoes`);
     console.log(`   📈 Order Statuses: pending, confirmed, processing, shipped, delivered`);
     

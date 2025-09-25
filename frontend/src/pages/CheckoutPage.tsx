@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { CreditCard, MapPin, ArrowLeft, Truck, IndianRupee, Smartphone, CreditCard as CreditCardIcon, Wallet } from 'lucide-react'
+import { CreditCard, MapPin, ArrowLeft, Truck, PoundSterling, Smartphone, CreditCard as CreditCardIcon, Wallet } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import axios from 'axios'
 import toast from 'react-hot-toast'
@@ -35,7 +35,7 @@ export default function CheckoutPage() {
     city: user?.address?.city || '',
     state: user?.address?.state || '',
     zipCode: user?.address?.zipCode || '',
-    country: 'India'
+    country: 'UK'
   })
   const [billingAddress, setBillingAddress] = useState({
     ...shippingAddress
@@ -67,8 +67,8 @@ export default function CheckoutPage() {
       console.error('Failed to fetch payment methods:', error)
       // Set fallback payment methods
       setPaymentMethods([
-        { id: 'cod', name: 'Cash on Delivery', description: 'Pay when your order is delivered', enabled: true, currencies: ['inr'] },
-        { id: 'card', name: 'Credit/Debit Card', description: 'Pay securely with your card', enabled: true, currencies: ['inr'] }
+        { id: 'cod', name: 'Cash on Delivery', description: 'Pay when your order is delivered', enabled: true, currencies: ['gbp'] },
+        { id: 'card', name: 'Credit/Debit Card', description: 'Pay securely with your card', enabled: true, currencies: ['gbp'] }
       ])
     }
   }
@@ -143,7 +143,7 @@ export default function CheckoutPage() {
       // Create payment intent
       const paymentResponse = await axios.post('/payment/create-payment-intent', {
         amount: Math.round(amount),
-        currency: 'inr',
+        currency: 'gbp',
         orderId,
         metadata: {
           orderType: 'ecommerce'
@@ -176,7 +176,7 @@ export default function CheckoutPage() {
       case 'upi':
         return Smartphone
       case 'cod':
-        return IndianRupee
+        return PoundSterling
       case 'wallet':
         return Wallet
       default:

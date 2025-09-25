@@ -29,7 +29,7 @@ KAGGLE_KEY=your_kaggle_api_key
 1. Go to [Kaggle Account Settings](https://www.kaggle.com/account)
 2. Click "Create New API Token"
 3. Download `kaggle.json`
-4. Place it in `C:\Users\HARJOT SINGH\.kaggle\kaggle.json` (Windows)
+4. Place it in `C:\Users\Sagar Jadhav\.kaggle\kaggle.json` (Windows)
 
 ## Step 3: Install Node.js Dependencies
 
@@ -132,4 +132,5 @@ All products will be available on your website through:
 4. Check your internet connection
 
 The import process is designed to be robust and will continue even if some products fail to process.
+
 

@@ -11,7 +11,7 @@ const router = express.Router();
 router.post('/create-payment-intent', [
   auth,
   body('amount').isInt({ min: 1 }).withMessage('Amount must be a positive integer'),
-  body('currency').optional().isIn(['inr', 'usd']).withMessage('Invalid currency'),
+  body('currency').optional().isIn(['gbp', 'usd']).withMessage('Invalid currency'),
   body('orderId').optional().isMongoId().withMessage('Invalid order ID')
 ], async (req, res) => {
   try {
@@ -24,7 +24,7 @@ router.post('/create-payment-intent', [
       });
     }
 
-    const { amount, currency = 'inr', orderId, metadata = {} } = req.body;
+    const { amount, currency = 'gbp', orderId, metadata = {} } = req.body;
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount * 100, // Stripe expects amount in cents/paisa
@@ -192,35 +192,35 @@ router.get('/methods', auth, async (req, res) => {
         name: 'Credit/Debit Card',
         description: 'Pay securely with your credit or debit card',
         enabled: true,
-        currencies: ['inr', 'usd']
+        currencies: ['gbp', 'usd']
       },
       {
         id: 'upi',
         name: 'UPI',
         description: 'Pay using your UPI ID',
         enabled: true,
-        currencies: ['inr']
+        currencies: ['gbp']
       },
       {
         id: 'netbanking',
         name: 'Net Banking',
         description: 'Pay using your bank account',
         enabled: true,
-        currencies: ['inr']
+        currencies: ['gbp']
       },
       {
         id: 'wallet',
         name: 'Digital Wallet',
         description: 'Pay using digital wallets like Paytm, PhonePe',
         enabled: true,
-        currencies: ['inr']
+        currencies: ['gbp']
       },
       {
         id: 'cod',
         name: 'Cash on Delivery',
         description: 'Pay when your order is delivered',
         enabled: true,
-        currencies: ['inr']
+        currencies: ['gbp']
       }
     ];
 

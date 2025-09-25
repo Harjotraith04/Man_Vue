@@ -56,7 +56,7 @@ export default function AIFeaturesPage() {
     {
       title: 'Shopping Assistant',
       description: 'Get help finding specific items or alternatives within your budget',
-      example: '"Show me formal shirts under ₹3000"'
+      example: '"Show me formal shirts under £30"'
     },
     {
       title: 'Style Inspiration',

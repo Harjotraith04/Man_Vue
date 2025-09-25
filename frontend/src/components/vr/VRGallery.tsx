@@ -212,7 +212,7 @@ export default function VRGallery({ products = [], className = '' }: VRGalleryPr
     {
       id: '1',
       title: 'Classic White Shirt',
-      price: { selling: 1999 },
+      price: { selling: 20 },
       primaryImage: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=400&fit=crop',
       slug: 'classic-white-shirt',
       category: 'shirts'
@@ -220,7 +220,7 @@ export default function VRGallery({ products = [], className = '' }: VRGalleryPr
     {
       id: '2',
       title: 'Blue Denim Jeans',
-      price: { selling: 2999 },
+      price: { selling: 30 },
       primaryImage: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&h=400&fit=crop',
       slug: 'blue-denim-jeans',
       category: 'jeans'
@@ -228,7 +228,7 @@ export default function VRGallery({ products = [], className = '' }: VRGalleryPr
     {
       id: '3',
       title: 'Leather Jacket',
-      price: { selling: 9999 },
+      price: { selling: 100 },
       primaryImage: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop',
       slug: 'leather-jacket',
       category: 'jackets'

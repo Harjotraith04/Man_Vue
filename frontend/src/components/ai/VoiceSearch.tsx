@@ -355,7 +355,7 @@ export default function VoiceSearch({ onResults, autoNavigate = true, className 
         <div className="border-t pt-4">
           <h4 className="font-semibold text-sm mb-2">Try saying:</h4>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• "Show me formal shirts under 3000 rupees"</li>
+            <li>• "Show me formal shirts under 30 pounds"</li>
             <li>• "I need casual jeans for weekend"</li>
             <li>• "Find ethnic wear for weddings"</li>
             <li>• "Looking for running shoes in blue"</li>
