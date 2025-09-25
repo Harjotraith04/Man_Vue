@@ -188,11 +188,11 @@ export default function AdminOrders() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
-          <p className="text-gray-600">Manage customer orders and fulfillment</p>
+          <h1 className="text-3xl font-bold text-white">Orders</h1>
+          <p className="text-gray-300">Manage customer orders and fulfillment</p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline">
+          <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
             <Download className="h-4 w-4 mr-2" />
             Export Orders
           </Button>
@@ -200,7 +200,7 @@ export default function AdminOrders() {
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
+      <Card className="mb-6 bg-gray-800 border-gray-700">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-64">
@@ -210,7 +210,7 @@ export default function AdminOrders() {
                   placeholder="Search by order number, customer name..."
                   value={filters.search}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                 />
               </div>
             </div>
@@ -218,7 +218,7 @@ export default function AdminOrders() {
             <select
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="px-3 py-2 border border-gray-600 rounded-md text-sm bg-gray-700 text-white"
             >
               <option value="">All Status</option>
               {orderStatuses.map(status => (
@@ -232,17 +232,17 @@ export default function AdminOrders() {
               type="date"
               value={filters.startDate}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
-              className="w-auto"
+              className="w-auto bg-gray-700 border-gray-600 text-white"
             />
 
             <Input
               type="date"
               value={filters.endDate}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
-              className="w-auto"
+              className="w-auto bg-gray-700 border-gray-600 text-white"
             />
 
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-700">
               <Filter className="h-4 w-4 mr-2" />
               More Filters
             </Button>
@@ -252,101 +252,101 @@ export default function AdminOrders() {
 
       {/* Order Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold">{pagination.totalOrders}</div>
-            <div className="text-sm text-gray-600">Total Orders</div>
+            <div className="text-2xl font-bold text-white">{pagination.totalOrders}</div>
+            <div className="text-sm text-gray-300">Total Orders</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-2xl font-bold text-yellow-400">
               {orders.filter(o => o.status === 'pending').length}
             </div>
-            <div className="text-sm text-gray-600">Pending</div>
+            <div className="text-sm text-gray-300">Pending</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-blue-400">
               {orders.filter(o => o.status === 'shipped').length}
             </div>
-            <div className="text-sm text-gray-600">Shipped</div>
+            <div className="text-sm text-gray-300">Shipped</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-400">
               {orders.filter(o => o.status === 'delivered').length}
             </div>
-            <div className="text-sm text-gray-600">Delivered</div>
+            <div className="text-sm text-gray-300">Delivered</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Orders Table */}
-      <Card>
+      <Card className="bg-gray-800 border-gray-700">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-8 text-center">
               <div className="spinner mx-auto mb-4"></div>
-              <p>Loading orders...</p>
+              <p className="text-white">Loading orders...</p>
             </div>
           ) : (
             <>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="w-32">Actions</TableHead>
+                  <TableRow className="border-gray-700">
+                    <TableHead className="text-gray-300">Order</TableHead>
+                    <TableHead className="text-gray-300">Customer</TableHead>
+                    <TableHead className="text-gray-300">Items</TableHead>
+                    <TableHead className="text-gray-300">Total</TableHead>
+                    <TableHead className="text-gray-300">Status</TableHead>
+                    <TableHead className="text-gray-300">Date</TableHead>
+                    <TableHead className="w-32 text-gray-300">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {orders.map((order) => {
                     const StatusIcon = getStatusIcon(order.status)
                     return (
-                      <TableRow key={order._id}>
+                      <TableRow key={order._id} className="border-gray-700 hover:bg-gray-700">
                         <TableCell>
                           <div>
-                            <p className="font-medium text-sm">#{order.orderNumber}</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="font-medium text-sm text-white">#{order.orderNumber}</p>
+                            <p className="text-xs text-gray-400">
                               {order.shippingAddress.city}, {order.shippingAddress.state}
                             </p>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium text-sm">{order.user.name}</p>
-                            <p className="text-xs text-gray-500">{order.user.email}</p>
+                            <p className="font-medium text-sm text-white">{order.user.name}</p>
+                            <p className="text-xs text-gray-400">{order.user.email}</p>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="text-sm">{order.items.length} items</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-sm text-white">{order.items.length} items</p>
+                            <p className="text-xs text-gray-400">
                               {order.items.slice(0, 2).map(item => item.product.title).join(', ')}
                               {order.items.length > 2 && '...'}
                             </p>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <p className="font-medium">{formatPrice(order.pricing.total)}</p>
+                          <p className="font-medium text-white">{formatPrice(order.pricing.total)}</p>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <StatusIcon className="h-4 w-4" />
+                            <StatusIcon className="h-4 w-4 text-gray-400" />
                             <Badge variant={getStatusColor(order.status)}>
                               {order.status}
                             </Badge>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-gray-400">
                             {formatDate(order.createdAt)}
                           </span>
                         </TableCell>
@@ -357,6 +357,7 @@ export default function AdminOrders() {
                               variant="ghost"
                               onClick={() => setSelectedOrder(order)}
                               title="View Details"
+                              className="text-gray-400 hover:text-white hover:bg-gray-600"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -367,8 +368,9 @@ export default function AdminOrders() {
                                 variant="ghost"
                                 onClick={() => handleUpdateOrderStatus(order.orderNumber, 'confirmed')}
                                 title="Confirm Order"
+                                className="text-gray-400 hover:text-green-400 hover:bg-gray-600"
                               >
-                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <CheckCircle className="h-4 w-4" />
                               </Button>
                             )}
                             
@@ -378,8 +380,9 @@ export default function AdminOrders() {
                                 variant="ghost"
                                 onClick={() => handleUpdateOrderStatus(order.orderNumber, 'shipped')}
                                 title="Mark as Shipped"
+                                className="text-gray-400 hover:text-blue-400 hover:bg-gray-600"
                               >
-                                <Truck className="h-4 w-4 text-blue-500" />
+                                <Truck className="h-4 w-4" />
                               </Button>
                             )}
                             
@@ -387,6 +390,7 @@ export default function AdminOrders() {
                               size="sm" 
                               variant="ghost"
                               title="Edit Order"
+                              className="text-gray-400 hover:text-white hover:bg-gray-600"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -400,8 +404,8 @@ export default function AdminOrders() {
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className="p-4 border-t flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
+                <div className="p-4 border-t border-gray-700 flex items-center justify-between">
+                  <div className="text-sm text-gray-400">
                     Showing {(pagination.currentPage - 1) * filters.limit + 1} to{' '}
                     {Math.min(pagination.currentPage * filters.limit, pagination.totalOrders)} of{' '}
                     {pagination.totalOrders} orders
@@ -412,6 +416,7 @@ export default function AdminOrders() {
                       variant="outline"
                       disabled={!pagination.hasPrev}
                       onClick={() => handlePageChange(pagination.currentPage - 1)}
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
                     >
                       Previous
                     </Button>
@@ -420,6 +425,7 @@ export default function AdminOrders() {
                       variant="outline"
                       disabled={!pagination.hasNext}
                       onClick={() => handlePageChange(pagination.currentPage + 1)}
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
                     >
                       Next
                     </Button>
@@ -434,13 +440,14 @@ export default function AdminOrders() {
       {/* Order Details Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-700">
               <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold">Order Details</h2>
+                <h2 className="text-xl font-bold text-white">Order Details</h2>
                 <Button 
                   variant="ghost" 
                   onClick={() => setSelectedOrder(null)}
+                  className="text-gray-400 hover:text-white hover:bg-gray-700"
                 >
                   ×
                 </Button>
@@ -450,51 +457,51 @@ export default function AdminOrders() {
             <div className="p-6">
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                  <h3 className="font-semibold mb-2">Order Information</h3>
-                  <p><strong>Order #:</strong> {selectedOrder.orderNumber}</p>
-                  <p><strong>Status:</strong> {selectedOrder.status}</p>
-                  <p><strong>Date:</strong> {formatDate(selectedOrder.createdAt)}</p>
+                  <h3 className="font-semibold mb-2 text-white">Order Information</h3>
+                  <p className="text-gray-300"><strong className="text-white">Order #:</strong> {selectedOrder.orderNumber}</p>
+                  <p className="text-gray-300"><strong className="text-white">Status:</strong> {selectedOrder.status}</p>
+                  <p className="text-gray-300"><strong className="text-white">Date:</strong> {formatDate(selectedOrder.createdAt)}</p>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-2">Customer</h3>
-                  <p><strong>Name:</strong> {selectedOrder.user.name}</p>
-                  <p><strong>Email:</strong> {selectedOrder.user.email}</p>
+                  <h3 className="font-semibold mb-2 text-white">Customer</h3>
+                  <p className="text-gray-300"><strong className="text-white">Name:</strong> {selectedOrder.user.name}</p>
+                  <p className="text-gray-300"><strong className="text-white">Email:</strong> {selectedOrder.user.email}</p>
                 </div>
               </div>
 
               <div className="mb-6">
-                <h3 className="font-semibold mb-2">Items</h3>
+                <h3 className="font-semibold mb-2 text-white">Items</h3>
                 <div className="space-y-2">
                   {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <div key={index} className="flex justify-between items-center p-2 bg-gray-700 rounded">
                       <div>
-                        <p className="font-medium">{item.product.title}</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="font-medium text-white">{item.product.title}</p>
+                        <p className="text-sm text-gray-400">
                           {item.color} - {item.size} × {item.quantity}
                         </p>
                       </div>
-                      <p className="font-medium">{formatPrice(item.totalPrice)}</p>
+                      <p className="font-medium text-white">{formatPrice(item.totalPrice)}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="mb-6">
-                <h3 className="font-semibold mb-2">Pricing</h3>
+                <h3 className="font-semibold mb-2 text-white">Pricing</h3>
                 <div className="space-y-1">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-gray-300">
                     <span>Subtotal:</span>
                     <span>{formatPrice(selectedOrder.pricing.subtotal)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-gray-300">
                     <span>Tax:</span>
                     <span>{formatPrice(selectedOrder.pricing.tax)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-gray-300">
                     <span>Shipping:</span>
                     <span>{formatPrice(selectedOrder.pricing.shipping)}</span>
                   </div>
-                  <div className="flex justify-between font-bold border-t pt-1">
+                  <div className="flex justify-between font-bold border-t border-gray-700 pt-1 text-white">
                     <span>Total:</span>
                     <span>{formatPrice(selectedOrder.pricing.total)}</span>
                   </div>
@@ -503,7 +510,7 @@ export default function AdminOrders() {
 
               <div className="flex space-x-2">
                 <select 
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                  className="flex-1 px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white"
                   onChange={(e) => {
                     if (e.target.value) {
                       handleUpdateOrderStatus(selectedOrder.orderNumber, e.target.value)
@@ -519,7 +526,7 @@ export default function AdminOrders() {
                     </option>
                   ))}
                 </select>
-                <Button variant="outline">Print</Button>
+                <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">Print</Button>
               </div>
             </div>
           </div>
