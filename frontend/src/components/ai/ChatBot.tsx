@@ -134,16 +134,42 @@ export default function ChatBot() {
       const botResponse = response.data.data.message
       addMessage('bot', botResponse)
 
-      // Check if the response suggests products and fetch them
-      if (botResponse.toLowerCase().includes('recommend') || 
-          botResponse.toLowerCase().includes('suggest') ||
-          botResponse.toLowerCase().includes('show you')) {
-        
+      // Intelligent product recommendation triggering
+      const shouldShowProducts = (
+        botResponse.toLowerCase().includes('recommend') || 
+        botResponse.toLowerCase().includes('suggest') ||
+        botResponse.toLowerCase().includes('show you') ||
+        botResponse.toLowerCase().includes('collection') ||
+        botResponse.toLowerCase().includes('options') ||
+        botResponse.toLowerCase().includes('pieces') ||
+        botResponse.toLowerCase().includes('items')
+      )
+      
+      if (shouldShowProducts) {
         // Extract potential search terms from the conversation
         const searchTerms = extractSearchTerms(message + ' ' + botResponse)
         if (searchTerms) {
-          fetchRecommendedProducts(searchTerms)
+          setTimeout(() => fetchRecommendedProducts(searchTerms), 500)
         }
+      }
+      
+      // Smart detection of direct product queries
+      const userSearchTerms = extractSearchTerms(message)
+      const isDirectProductQuery = (
+        message.toLowerCase().includes('show me') ||
+        message.toLowerCase().includes('find me') ||
+        message.toLowerCase().includes('looking for') ||
+        message.toLowerCase().includes('need') ||
+        message.toLowerCase().includes('want') ||
+        message.toLowerCase().includes('maximum') ||
+        message.toLowerCase().includes('minimum') ||
+        message.toLowerCase().includes('premium') ||
+        message.toLowerCase().includes('budget') ||
+        /\b(shirts?|jeans?|shoes?|accessories?)\b/.test(message.toLowerCase())
+      )
+      
+      if (userSearchTerms && isDirectProductQuery) {
+        setTimeout(() => fetchRecommendedProducts(userSearchTerms), 800)
       }
 
     } catch (error) {
@@ -155,24 +181,104 @@ export default function ChatBot() {
   }
 
   const extractSearchTerms = (text: string): string => {
-    // Simple keyword extraction - in a real app, you'd use more sophisticated NLP
-    const keywords = ['shirt', 'jeans', 'jacket', 'shoes', 'formal', 'casual', 'ethnic', 'watch']
-    const foundKeywords = keywords.filter(keyword => 
-      text.toLowerCase().includes(keyword)
-    )
-    return foundKeywords[0] || ''
+    // Enhanced keyword extraction matching actual database categories
+    const keywords = [
+      // Primary categories (match database exactly)
+      'shirts', 'shirt', 'jeans', 'jackets', 'jacket', 'tshirts', 't-shirt', 'tshirt',
+      'formal-shoes', 'accessories', 'kurtas', 'kurta', 'formal', 'shoes', 'shoe',
+      // Style descriptors
+      'casual', 'professional', 'business', 'office', 'ethnic', 'traditional',
+      // Price-based queries
+      'maximum price', 'minimum price', 'highest price', 'lowest price', 'premium', 'budget', 'expensive', 'cheap',
+      // Specific items
+      'trousers', 'pants', 'sneakers', 'boots', 'belt', 'wallet', 'watch',
+      'chinos', 'shorts', 'blazer', 'suit', 'sweater', 'hoodie'
+    ]
+    
+    const textLower = text.toLowerCase()
+    const foundKeywords = keywords.filter(keyword => textLower.includes(keyword))
+    
+    // Handle price-based queries specially (including common typos and variations)
+    if (textLower.includes('maximum price') || textLower.includes('highest price') || 
+        textLower.includes('maximum prize') || textLower.includes('highest prize') ||
+        textLower.includes('max price') || textLower.includes('max prize')) {
+      return 'maximum price products'
+    }
+    if (textLower.includes('minimum price') || textLower.includes('lowest price') ||
+        textLower.includes('minimum prize') || textLower.includes('lowest prize') ||
+        textLower.includes('min price') || textLower.includes('min prize')) {
+      return 'minimum price products'
+    }
+    if (textLower.includes('premium') || textLower.includes('expensive') || textLower.includes('luxury')) {
+      return 'premium products'
+    }
+    if (textLower.includes('budget') || textLower.includes('cheap') || textLower.includes('affordable')) {
+      return 'budget products'
+    }
+    
+    // Return the most specific match first, prioritizing exact database categories
+    const priorityOrder = ['formal-shoes', 'tshirts', 'accessories', 'kurtas', 'jackets', 'shirts', 'jeans', 'shoes', 'formal']
+    for (const priority of priorityOrder) {
+      if (foundKeywords.includes(priority)) return priority
+    }
+    
+    return foundKeywords.sort((a, b) => b.length - a.length)[0] || ''
   }
 
   const fetchRecommendedProducts = async (searchTerm: string) => {
     try {
-      const response = await axios.get(`/products?search=${searchTerm}&limit=4`)
-      const products = response.data.data.products
+      // Use the smart recommendation endpoint
+      const response = await axios.post('/ai/recommend-products', {
+        query: searchTerm,
+        limit: 6
+      })
       
-      if (products.length > 0) {
-        addMessage('bot', `Here are some ${searchTerm} recommendations for you:`, products)
+      const { products } = response.data.data
+      
+      if (products && products.length > 0) {
+        addMessage('bot', `Here are some ${searchTerm} recommendations from our collection:`, products)
+      } else {
+        // Fallback to general featured products
+        const fallbackResponse = await axios.get('/products?limit=4&featured=true')
+        const fallbackProducts = fallbackResponse.data.data.products
+        
+        if (fallbackProducts.length > 0) {
+          const formattedProducts = fallbackProducts.map((product: any) => ({
+            id: product._id,
+            title: product.title,
+            price: product.price,
+            primaryImage: product.variants?.[0]?.images?.[0]?.url || product.primaryImage,
+            slug: product.slug,
+            category: product.category,
+            rating: product.rating
+          }))
+          addMessage('bot', "Here are some popular items from our collection:", formattedProducts)
+        }
       }
     } catch (error) {
       console.error('Failed to fetch recommendations:', error)
+      
+      // Final fallback - try basic product search
+      try {
+        const fallbackResponse = await axios.get(`/products?search=${searchTerm}&limit=4`)
+        const fallbackProducts = fallbackResponse.data.data.products
+        
+        if (fallbackProducts.length > 0) {
+          const formattedProducts = fallbackProducts.map((product: any) => ({
+            id: product._id,
+            title: product.title,
+            price: product.price,
+            primaryImage: product.variants?.[0]?.images?.[0]?.url || product.primaryImage,
+            slug: product.slug,
+            category: product.category,
+            rating: product.rating
+          }))
+          addMessage('bot', `Here are some ${searchTerm} options I found:`, formattedProducts)
+        }
+      } catch (finalError) {
+        console.error('All product fetch attempts failed:', finalError)
+        addMessage('bot', `I'm having trouble fetching specific ${searchTerm} recommendations right now, but I'd be happy to help you in other ways! You can browse our full collection using the products page.`)
+      }
     }
   }
 
@@ -270,10 +376,11 @@ export default function ChatBot() {
 
   const quickActions = [
     "Help me find a formal outfit",
-    "Show me casual wear",
+    "Show me casual wear", 
+    "Show me maximum prize products",
+    "Show me minimum price products",
     "What's trending now?",
-    "Size guide help",
-    "Color matching advice"
+    "I need help choosing"
   ]
 
   if (!isOpen) {
@@ -344,33 +451,64 @@ export default function ChatBot() {
                       {message.products && message.products.length > 0 && (
                         <div className="mt-3 space-y-2">
                           {message.products.map((product) => (
-                            <div key={product.id} className="bg-white rounded-lg p-2 shadow-sm">
-                              <div className="flex items-center space-x-2">
-                                <img
-                                  src={product.primaryImage}
-                                  alt={product.title}
-                                  className="w-12 h-12 rounded object-cover"
-                                />
-                                <div className="flex-1">
-                                  <p className="text-xs font-medium text-gray-800 truncate">
+                            <div key={product.id} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200 hover:border-gray-300 transition-colors">
+                              <div className="flex items-center space-x-3">
+                                <div className="flex-shrink-0">
+                                  <img
+                                    src={product.primaryImage || '/placeholder-image.jpg'}
+                                    alt={product.title}
+                                    className="w-16 h-16 rounded-md object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = '/placeholder-image.jpg'
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate" title={product.title}>
                                     {product.title}
                                   </p>
-                                  <p className="text-xs text-blue-600 font-bold">
-                                    {formatPrice(product.price.selling)}
+                                  <p className="text-xs text-gray-500 capitalize">
+                                    {product.category || 'Fashion'}
                                   </p>
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    <p className="text-sm text-blue-600 font-bold">
+                                      {formatPrice(product.price?.selling || product.price)}
+                                    </p>
+                                    {product.rating?.average && (
+                                      <div className="flex items-center">
+                                        <span className="text-xs text-yellow-500">★</span>
+                                        <span className="text-xs text-gray-600 ml-1">
+                                          {product.rating.average.toFixed(1)}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                                <a
-                                  href={`/product/${product.slug}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  <Button size="sm" variant="outline">
-                                    View
-                                  </Button>
-                                </a>
+                                <div className="flex-shrink-0">
+                                  <a
+                                    href={`/product/${product.slug}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-block"
+                                  >
+                                    <Button size="sm" variant="outline" className="text-xs px-3">
+                                      View
+                                    </Button>
+                                  </a>
+                                </div>
                               </div>
                             </div>
                           ))}
+                          <div className="text-center mt-2">
+                            <a 
+                              href="/products" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-500 hover:text-blue-700 underline"
+                            >
+                              View all products →
+                            </a>
+                          </div>
                         </div>
                       )}
                     </div>

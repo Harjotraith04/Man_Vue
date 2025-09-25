@@ -355,8 +355,8 @@ function generateSampleOrders(users, products) {
       },
       shipping: {
         method: 'standard',
-        provider: 'bluedart',
-        trackingNumber: status === 'shipped' || status === 'delivered' ? `BLU${Date.now().toString().slice(-8)}` : '',
+        provider: 'royal_mail',
+        trackingNumber: status === 'shipped' || status === 'delivered' ? `RM${Date.now().toString().slice(-8)}` : '',
         estimatedDelivery: new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000),
         actualDelivery: status === 'delivered' ? new Date(orderDate.getTime() + Math.random() * 7 * 24 * 60 * 60 * 1000) : undefined,
         cost: shipping

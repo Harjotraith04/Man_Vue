@@ -26,20 +26,24 @@ router.post('/chat', [
     }
 
     const { message, context = [] } = req.body;
+    let botMessage;
     
-    // Get user's preferences if authenticated
-    let userPreferences = '';
-    if (req.user) {
-      const preferences = req.user.preferences;
-      userPreferences = `
-        User preferences:
-        - Favorite categories: ${preferences.favoriteCategories?.join(', ') || 'None specified'}
-        - Size preferences: Shirt: ${preferences.sizePreferences?.shirt || 'Not specified'}, Pants: ${preferences.sizePreferences?.pants || 'Not specified'}, Shoes: ${preferences.sizePreferences?.shoes || 'Not specified'}
-      `;
-    }
+    // Try Gemini AI first, fallback to rule-based responses
+    try {
+      if (process.env.GEMINI_API_KEY) {
+        // Get user's preferences if authenticated
+        let userPreferences = '';
+        if (req.user) {
+          const preferences = req.user.preferences;
+          userPreferences = `
+            User preferences:
+            - Favorite categories: ${preferences.favoriteCategories?.join(', ') || 'None specified'}
+            - Size preferences: Shirt: ${preferences.sizePreferences?.shirt || 'Not specified'}, Pants: ${preferences.sizePreferences?.pants || 'Not specified'}, Shoes: ${preferences.sizePreferences?.shoes || 'Not specified'}
+          `;
+        }
 
-    // Create context-aware prompt
-    const systemPrompt = `
+        // Create context-aware prompt
+        const systemPrompt = `
 You are Manvue's AI fashion assistant, an expert in men's fashion and style. You help customers with:
 
 1. Style advice and outfit recommendations
@@ -69,10 +73,18 @@ Current user message: ${message}
 Respond as Manvue's fashion assistant:
 `;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    const result = await model.generateContent(systemPrompt);
-    const response = await result.response;
-    const botMessage = response.text();
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const result = await model.generateContent(systemPrompt);
+        const response = await result.response;
+        botMessage = response.text();
+      } else {
+        // Fallback to rule-based responses
+        botMessage = generateRuleBasedResponse(message, req.user);
+      }
+    } catch (aiError) {
+      console.warn('Gemini AI error, using fallback:', aiError.message);
+      botMessage = generateRuleBasedResponse(message, req.user);
+    }
 
     res.json({
       success: true,
@@ -86,7 +98,7 @@ Respond as Manvue's fashion assistant:
     console.error('AI Chat error:', error);
     res.status(500).json({
       success: false,
-      message: 'AI service temporarily unavailable'
+      message: 'I apologize, but I am having trouble responding right now. Please try again in a moment.'
     });
   }
 });
@@ -469,6 +481,124 @@ Format as JSON:
   }
 });
 
+// Intelligent rule-based response generator for fallback
+function generateRuleBasedResponse(message, user) {
+  const messageLower = message.toLowerCase();
+  
+  // Normalize common typos and variations
+  const normalizedMessage = messageLower
+    .replace(/prize/g, 'price')  // Common typo
+    .replace(/maximun/g, 'maximum')  // Common typo
+    .replace(/minimun/g, 'minimum')  // Common typo
+    .replace(/cloths/g, 'clothes')  // Common typo
+    .replace(/shose/g, 'shoes')  // Common typo
+    .replace(/jeens/g, 'jeans')  // Common typo
+    .replace(/shirtt/g, 'shirt')  // Common typo
+    .replace(/accesories/g, 'accessories')  // Common typo
+    .replace(/\s+/g, ' ')  // Multiple spaces to single space
+    .trim();
+  
+  // Formal wear queries
+  if (normalizedMessage.includes('formal') || normalizedMessage.includes('office') || normalizedMessage.includes('work') || normalizedMessage.includes('business')) {
+    return "For formal occasions, I recommend a crisp dress shirt from our formal collection paired with well-fitted trousers. Complete the look with formal leather shoes and elegant accessories. Our formal category includes professional shirts, business attire, and ethnic formal wear like kurtas. Would you like me to show you some specific formal wear options from our collection?";
+  }
+  
+  // Casual wear queries
+  if (normalizedMessage.includes('casual') || normalizedMessage.includes('everyday') || normalizedMessage.includes('relaxed')) {
+    return "For casual wear, you can choose from our collection of comfortable jeans, casual shirts, or t-shirts. Add casual shoes or sneakers to complete the look. We also have great accessories like belts and watches to enhance your casual style. What's your preferred casual style - more relaxed or smart-casual?";
+  }
+  
+  // Trending/fashion queries
+  if (normalizedMessage.includes('trend') || normalizedMessage.includes('popular') || normalizedMessage.includes('style') || normalizedMessage.includes('fashion')) {
+    return "Currently trending in men's fashion: oversized t-shirts, slim-fit jeans, minimalist sneakers, and classic leather jackets. Neutral colors like navy, white, black, and earth tones are very popular. What type of trending item interests you most?";
+  }
+  
+  // Size guide queries
+  if (normalizedMessage.includes('size') || normalizedMessage.includes('fit') || normalizedMessage.includes('measurement')) {
+    return "Here's a quick size guide: For shirts, measure your chest and neck. For pants, you'll need waist and inseam measurements. For shoes, it's best to measure your foot length. Would you like detailed sizing help for a specific item category?";
+  }
+  
+  // Color advice
+  if (normalizedMessage.includes('color') || normalizedMessage.includes('match') || normalizedMessage.includes('coordinate')) {
+    return "Great color combinations include: Navy with white or grey, black with almost any color, khaki with navy or white, and burgundy with grey. For a safe approach, stick to neutral base colors and add one accent color. What colors are you considering?";
+  }
+  
+  // Specific product categories matching our actual inventory
+  const categories = {
+    'shirt': 'Check out our shirts collection! We have both casual and formal shirts in various styles. Our collection includes comfortable everyday shirts and professional formal options.',
+    'shirts': 'Check out our shirts collection! We have both casual and formal shirts in various styles. Our collection includes comfortable everyday shirts and professional formal options.',
+    'jean': 'Our jeans collection offers modern styles in comfortable fits. These are perfect for casual wear and can be paired with t-shirts or casual shirts.',
+    'jeans': 'Our jeans collection offers modern styles in comfortable fits. These are perfect for casual wear and can be paired with t-shirts or casual shirts.',
+    'shoe': 'Browse our shoes collection with both casual and formal options. We have comfortable everyday shoes and premium formal footwear.',
+    'shoes': 'Browse our shoes collection with both casual and formal options. We have comfortable everyday shoes and premium formal footwear.',
+    'formal': 'Our formal collection includes professional business attire, formal shirts, and elegant ethnic wear. Perfect for office, meetings, and formal events.',
+    'jacket': 'Check out our jackets for stylish layering options that add sophistication to any outfit.',
+    't-shirt': 'Our t-shirts are perfect for casual, comfortable wear. Great for everyday activities and casual outings.',
+    'tshirt': 'Our t-shirts are perfect for casual, comfortable wear. Great for everyday activities and casual outings.',
+    'accessory': 'Browse our accessories collection for the perfect finishing touches - from watches to belts and other stylish add-ons.',
+    'accessories': 'Browse our accessories collection for the perfect finishing touches - from watches to belts and other stylish add-ons.',
+    'kurta': 'Explore our kurtas collection for traditional and contemporary ethnic wear, perfect for festivals, weddings, and cultural events.',
+    'kurtas': 'Explore our kurtas collection for traditional and contemporary ethnic wear, perfect for festivals, weddings, and cultural events.',
+    'ethnic': 'Our ethnic collection features beautiful kurtas and traditional wear for special occasions and cultural celebrations.'
+  };
+  
+  for (const [keyword, response] of Object.entries(categories)) {
+    if (normalizedMessage.includes(keyword)) {
+      return response + " Would you like me to show you some specific options?";
+    }
+  }
+  
+  // Intelligent context-aware responses
+  if (normalizedMessage.includes('help') || normalizedMessage.includes('assist') || normalizedMessage.includes('need')) {
+    return "I'm here to help you with all your fashion needs! I can assist with outfit recommendations, style advice, size guides, color coordination, and product suggestions. Here's what I can do:\n\n• Show you formal, casual, or ethnic wear\n• Find products by price range (budget to premium)\n• Provide styling tips for any occasion\n• Help with size and fit questions\n• Suggest color combinations\n\nWhat would you like help with today?";
+  }
+  
+  // Shopping intent detection
+  if (normalizedMessage.includes('buy') || normalizedMessage.includes('purchase') || normalizedMessage.includes('order') || normalizedMessage.includes('shop')) {
+    return "Great! I'd love to help you find the perfect items to purchase. Our collection includes shirts (£15-£20), jeans (£26-£30), jackets (£100), shoes (£35-£40), t-shirts (£7), accessories (£10), and ethnic wear (£19-£22). What type of item are you looking to buy?";
+  }
+  
+  // Occasion-based advice
+  if (messageLower.includes('date') || messageLower.includes('dinner')) {
+    return "For a date or dinner, smart-casual is usually perfect: nice chinos or dark jeans with a button-down shirt or polo, finished with clean shoes. Avoid being too formal or too casual. What's the venue like?";
+  }
+  
+  if (messageLower.includes('wedding') || messageLower.includes('party')) {
+    return "For weddings and parties, consider the dress code first. Generally, a well-fitted suit or blazer with trousers works well. Choose colors that complement the season and venue. Need help with a specific dress code?";
+  }
+  
+  // Budget and price queries (with intelligent typo correction)
+  if (normalizedMessage.includes('budget') || normalizedMessage.includes('cheap') || normalizedMessage.includes('affordable') || 
+      normalizedMessage.includes('minimum price') || normalizedMessage.includes('lowest price')) {
+    return "Looking for budget-friendly options? I can show you our most affordable pieces that offer great value. These include quality basics like t-shirts (starting at £7), casual shirts (£15), and stylish accessories (£10). Our budget range offers excellent value for money. What type of item are you looking for at a lower price point?";
+  }
+  
+  if (normalizedMessage.includes('maximum price') || normalizedMessage.includes('highest price') || 
+      normalizedMessage.includes('max price') ||
+      normalizedMessage.includes('premium') || normalizedMessage.includes('expensive') || normalizedMessage.includes('luxury')) {
+    return "Looking for premium, high-quality pieces? Our premium collection includes luxury items like our £100 leather jacket, £40 formal shoes, and high-end ethnic wear. These are investment pieces perfect for special occasions and long-term wardrobe building. What type of premium item interests you?";
+  }
+  
+  // Default responses for common greetings and general questions
+  if (normalizedMessage.includes('hello') || normalizedMessage.includes('hi') || normalizedMessage.includes('hey')) {
+    const timeGreeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening';
+    return `${timeGreeting}! I'm your AI fashion advisor. I can help you with outfit recommendations, style advice, product information, and fashion trends. What can I help you find today?`;
+  }
+  
+  // Thank you responses
+  if (normalizedMessage.includes('thank') || normalizedMessage.includes('thanks')) {
+    return "You're very welcome! I'm always here to help with your fashion questions. Is there anything else you'd like to know about our collection or styling advice?";
+  }
+  
+  // Intelligent default response with context
+  const hasQuestionWords = /\b(what|where|how|when|why|which|who)\b/.test(normalizedMessage);
+  if (hasQuestionWords) {
+    return "That's a great question! I specialize in men's fashion and can help with outfit recommendations, style tips, size guides, color coordination, and product suggestions. Could you tell me more specifically what you're looking for? For example:\n\n• Formal wear for office/events\n• Casual everyday clothes\n• Products by price range\n• Style advice for occasions\n• Size and fit guidance";
+  }
+  
+  return "I'd be happy to help you with fashion advice! I can assist with outfit recommendations, style tips, size guides, color coordination, and product suggestions. Could you tell me more about what you're looking for? For example, are you shopping for a specific occasion, or do you need help with a particular item like shirts, jeans, or shoes?";
+}
+
 // Helper function to map outfit items to product categories
 function mapItemToCategory(item) {
   const itemLower = item.toLowerCase();
@@ -510,6 +640,178 @@ function mapItemToCategory(item) {
 
   return null;
 }
+
+// Smart product recommendation endpoint for chatbot
+router.post('/recommend-products', [
+  optionalAuth,
+  body('query').trim().isLength({ min: 1, max: 200 }).withMessage('Query must be between 1 and 200 characters'),
+  body('category').optional().isString(),
+  body('limit').optional().isInt({ min: 1, max: 12 }).withMessage('Limit must be between 1 and 12')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { query, category, limit = 6 } = req.body;
+    const queryLower = query.toLowerCase();
+
+    // Build smart search query
+    const searchQuery = { isActive: true };
+    
+    // Category mapping based on actual database categories
+    const categoryMap = {
+      'shirt': ['shirts'],
+      'shirts': ['shirts'],
+      'jeans': ['jeans'],
+      'formal': ['shirts', 'formal-shoes', 'formal', 'kurtas'], // Include formal category and formal ethnic wear
+      'casual': ['tshirts', 'jeans', 'shirts', 'accessories', 'shoes'],
+      'shoes': ['shoes', 'formal-shoes'],
+      'shoe': ['shoes', 'formal-shoes'],
+      'sneakers': ['shoes'],
+      'jacket': ['jackets'],
+      'jackets': ['jackets'],
+      'ethnic': ['kurtas'],
+      'kurtas': ['kurtas'],
+      'kurta': ['kurtas'],
+      'accessories': ['accessories'],
+      'accessory': ['accessories'],
+      'watch': ['accessories'],
+      'belt': ['accessories'],
+      'wallet': ['accessories'],
+      'trousers': ['formal', 'jeans'], // Map to formal and jeans as alternatives
+      'pants': ['formal', 'jeans'],
+      'tshirt': ['tshirts'],
+      't-shirt': ['tshirts'],
+      // Price-based queries - show all categories
+      'maximum price products': ['shirts', 'jeans', 'jackets', 'tshirts', 'formal-shoes', 'accessories', 'kurtas', 'formal', 'shoes'],
+      'minimum price products': ['shirts', 'jeans', 'jackets', 'tshirts', 'formal-shoes', 'accessories', 'kurtas', 'formal', 'shoes'],
+      'premium products': ['jackets', 'formal-shoes', 'kurtas', 'formal', 'shirts'],
+      'budget products': ['tshirts', 'accessories', 'shirts', 'jeans'],
+      'maximum prize products': ['shirts', 'jeans', 'jackets', 'tshirts', 'formal-shoes', 'accessories', 'kurtas', 'formal', 'shoes'],
+      'minimum prize products': ['shirts', 'jeans', 'jackets', 'tshirts', 'formal-shoes', 'accessories', 'kurtas', 'formal', 'shoes']
+    };
+
+    // Find matching categories
+    let targetCategories = [];
+    if (category) {
+      targetCategories = categoryMap[category] || [category];
+    } else {
+      // Auto-detect categories from query
+      Object.entries(categoryMap).forEach(([key, categories]) => {
+        if (queryLower.includes(key)) {
+          targetCategories.push(...categories);
+        }
+      });
+    }
+
+    if (targetCategories.length > 0) {
+      searchQuery.category = { $in: targetCategories };
+    }
+
+    // Text search for more specific matching
+    if (query.length > 3) {
+      searchQuery.$text = { $search: query };
+    }
+
+    // Subcategory filters
+    if (queryLower.includes('formal') || queryLower.includes('office') || queryLower.includes('business') || queryLower.includes('professional')) {
+      searchQuery.subCategory = 'formal';
+    } else if (queryLower.includes('casual') || queryLower.includes('everyday') || queryLower.includes('relaxed')) {
+      searchQuery.subCategory = 'casual';
+    }
+    
+    // Special handling for formal wear - include both formal subcategory and formal category
+    if (queryLower.includes('formal') || queryLower.includes('office') || queryLower.includes('business')) {
+      if (!searchQuery.category) {
+        searchQuery.$or = [
+          { subCategory: 'formal' },
+          { category: 'formal' },
+          { category: 'formal-shoes' }
+        ];
+      }
+    }
+
+    // Price filters and sorting for budget queries (including common typos)
+    let sortCriteria = { 'rating.average': -1, soldCount: -1, isFeatured: -1 };
+    
+    if (queryLower.includes('budget') || queryLower.includes('cheap') || queryLower.includes('affordable') || 
+        queryLower.includes('minimum price') || queryLower.includes('lowest price') ||
+        queryLower.includes('minimum prize') || queryLower.includes('lowest prize')) {
+      searchQuery['price.selling'] = { $lt: 30 };
+      sortCriteria = { 'price.selling': 1 }; // Sort by price ascending (cheapest first)
+    } else if (queryLower.includes('premium') || queryLower.includes('expensive') || queryLower.includes('luxury') || 
+               queryLower.includes('maximum price') || queryLower.includes('highest price') ||
+               queryLower.includes('maximum prize') || queryLower.includes('highest prize') ||
+               queryLower.includes('max price') || queryLower.includes('max prize')) {
+      searchQuery['price.selling'] = { $gt: 30 };
+      sortCriteria = { 'price.selling': -1 }; // Sort by price descending (most expensive first)
+    }
+
+    // Execute search with fallbacks
+    let products = await Product.find(searchQuery)
+      .select('title slug price.selling discount primaryImage rating.average category brand.name variants')
+      .sort(sortCriteria)
+      .limit(parseInt(limit));
+
+    // Fallback 1: If no products found, try broader category search
+    if (products.length === 0 && targetCategories.length > 0) {
+      products = await Product.find({
+        isActive: true,
+        category: { $in: targetCategories }
+      })
+        .select('title slug price.selling discount primaryImage rating.average category brand.name variants')
+        .sort({ 'rating.average': -1, isFeatured: -1 })
+        .limit(parseInt(limit));
+    }
+
+    // Fallback 2: Show featured products if still no matches
+    if (products.length === 0) {
+      products = await Product.find({
+        isActive: true,
+        isFeatured: true
+      })
+        .select('title slug price.selling discount primaryImage rating.average category brand.name variants')
+        .sort({ 'rating.average': -1 })
+        .limit(parseInt(limit));
+    }
+
+    // Format products for chatbot
+    const formattedProducts = products.map(product => ({
+      id: product._id,
+      title: product.title,
+      slug: product.slug,
+      price: product.price,
+      primaryImage: product.variants?.[0]?.images?.[0]?.url || product.primaryImage,
+      category: product.category,
+      brand: product.brand,
+      rating: product.rating,
+      discount: product.discount
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        products: formattedProducts,
+        query,
+        totalFound: products.length,
+        categories: targetCategories
+      }
+    });
+
+  } catch (error) {
+    console.error('Product recommendation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch product recommendations'
+    });
+  }
+});
 
 // Generate product embeddings (admin utility)
 router.post('/generate-embeddings', async (req, res) => {
