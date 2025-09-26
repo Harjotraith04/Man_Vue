@@ -168,9 +168,7 @@ router.get('/google/callback',
 // Get current user
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
-      .populate('wishlist', 'title price.selling primaryImage')
-      .populate('cart.product', 'title price.selling primaryImage variants');
+    const user = await User.findById(req.user.id).select('-passwordHash');
 
     if (!user) {
       return res.status(404).json({
@@ -181,14 +179,26 @@ router.get('/me', auth, async (req, res) => {
 
     res.json({
       success: true,
-      user
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+          phone: user.phone,
+          address: user.address,
+          preferences: user.preferences
+        }
+      }
     });
 
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 });

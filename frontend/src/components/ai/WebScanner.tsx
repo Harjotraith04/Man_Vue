@@ -16,7 +16,12 @@ import {
   List,
   ExternalLink,
   Loader2,
-  RefreshCcw
+  RefreshCcw,
+  TrendingUp,
+  TrendingDown,
+  ArrowUpDown,
+  Award,
+  DollarSign
 } from 'lucide-react'
 import axios from 'axios'
 import { formatPrice } from '@/lib/utils'
@@ -27,11 +32,39 @@ interface ScrapedProduct {
   price: {
     selling: number
     currency: string
+    original?: string
   }
   image: string
   link: string
   source: string
+  sourceName: string
+  rating?: string
   category: string
+  scrapedAt: string
+  priceComparison?: {
+    isLowest: boolean
+    isHighest: boolean
+    percentageFromAverage: number
+    avgPrice: number
+  }
+}
+
+interface ScrapeResponse {
+  success: boolean
+  data: {
+    products: ScrapedProduct[]
+    query: string
+    totalFound: number
+    sitesScraped: string[]
+    productsBySource: { [key: string]: ScrapedProduct[] }
+    priceRange?: {
+      min: number
+      max: number
+      average: number
+    }
+    scrapedAt: string
+    isRealScraping: boolean
+  }
 }
 
 interface ShoppingSite {
@@ -56,6 +89,8 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
   const [availableSites, setAvailableSites] = useState<ShoppingSite[]>([])
   const [popularCategories, setPopularCategories] = useState<Array<{name: string, query: string, icon: string}>>([])
   const [lastSearchQuery, setLastSearchQuery] = useState('')
+  const [priceRange, setPriceRange] = useState<{min: number, max: number, average: number} | null>(null)
+  const [sortBy, setSortBy] = useState<'relevance' | 'price-low' | 'price-high'>('relevance')
 
   useEffect(() => {
     if (isOpen) {
@@ -89,20 +124,40 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
     setLastSearchQuery(query)
     
     try {
-      const response = await axios.post('/web-scraper/scrape-products', {
+      const response = await axios.post<ScrapeResponse>('/web-scraper/scrape-products', {
         query: query.trim(),
         sites: selectedSites,
         limit: 24
       })
       
-      const scrapedProducts = response.data.data.products || []
-      setProducts(scrapedProducts)
+      const responseData = response.data.data
+      let scrapedProducts = responseData.products || []
       
-      toast.success(`Found ${scrapedProducts.length} products from ${response.data.data.sitesScraped?.length || 0} shopping sites`)
+      // Sort products based on selected sort option
+      if (sortBy === 'price-low') {
+        scrapedProducts = scrapedProducts.sort((a, b) => a.price.selling - b.price.selling)
+      } else if (sortBy === 'price-high') {
+        scrapedProducts = scrapedProducts.sort((a, b) => b.price.selling - a.price.selling)
+      }
+      
+      setProducts(scrapedProducts)
+      setPriceRange(responseData.priceRange || null)
+      
+      if (responseData.isRealScraping) {
+        const lowestPriceProducts = scrapedProducts.filter(p => p.priceComparison?.isLowest).length
+        toast.success(
+          `🎯 Found ${scrapedProducts.length} real products from ${responseData.sitesScraped?.length || 0} sites` +
+          (lowestPriceProducts > 0 ? ` · ${lowestPriceProducts} lowest prices found` : ''),
+          { duration: 4000 }
+        )
+      } else {
+        toast.success(`Found ${scrapedProducts.length} products from ${responseData.sitesScraped?.length || 0} shopping sites`)
+      }
     } catch (error) {
       console.error('Failed to scrape products:', error)
-      toast.error('Failed to search products from shopping sites')
+      toast.error('Failed to search products from shopping sites. Please try again.')
       setProducts([])
+      setPriceRange(null)
     } finally {
       setIsLoading(false)
     }
@@ -144,7 +199,7 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
 
   return (
     <div className={`fixed bottom-6 left-6 z-[9999] transition-all duration-200 ${
-      isMinimized ? 'w-80 h-16' : 'w-[600px] h-[500px]'
+      isMinimized ? 'w-80 h-16' : 'w-[800px] h-[700px]'
     }`} style={{ position: 'fixed', pointerEvents: 'auto' }}>
       <Card className="h-full shadow-2xl bg-gray-900 border-2 border-orange-400" style={{ position: 'relative', zIndex: 1, isolation: 'isolate' }}>
         <CardHeader className="flex flex-row items-center justify-between p-4 border-b border-orange-300 bg-gradient-to-r from-gray-800 to-gray-700">
@@ -220,6 +275,16 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
                     disabled={isLoading}
                   />
                 </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'relevance' | 'price-low' | 'price-high')}
+                  className="bg-gray-700 border border-orange-400 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-orange-500"
+                  disabled={isLoading}
+                >
+                  <option value="relevance">Relevance</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                </select>
                 <Button
                   onClick={handleSearch}
                   disabled={isLoading || !searchQuery.trim()}
@@ -229,6 +294,29 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
                   {isLoading ? 'Scanning...' : 'Search'}
                 </Button>
               </div>
+
+              {/* Price Range Display */}
+              {priceRange && products.length > 0 && (
+                <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center text-green-400">
+                      <TrendingDown className="h-4 w-4 mr-1" />
+                      <span>From £{priceRange.min.toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center text-yellow-400">
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      <span>Avg £{priceRange.average.toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center text-red-400">
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      <span>Up to £{priceRange.max.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <Badge className="bg-blue-600 text-white text-xs">
+                    💰 Compare {products.length} prices
+                  </Badge>
+                </div>
+              )}
 
               {/* Popular Categories */}
               <div className="space-y-2">
@@ -274,7 +362,7 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
             </div>
 
             {/* Products Grid/List */}
-            <CardContent className="flex-1 overflow-y-auto p-4 h-[440px] bg-gray-900">
+            <CardContent className="flex-1 overflow-y-auto p-4 h-[640px] bg-gray-900">
               {isLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
@@ -309,7 +397,7 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
                 </div>
               ) : (
                 <div className={viewMode === 'grid' ? 
-                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : 
+                  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4" : 
                   "space-y-3"
                 }>
                   {products.map((product, index) => (
@@ -320,7 +408,15 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
                     }>
                       {viewMode === 'grid' ? (
                         <>
-                          <div className="aspect-square overflow-hidden rounded-t-lg bg-gray-700">
+                          <div className="aspect-square overflow-hidden rounded-t-lg bg-gray-700 relative">
+                            {product.priceComparison?.isLowest && (
+                              <div className="absolute top-2 left-2 z-10">
+                                <Badge className="bg-green-600 text-white text-xs font-bold">
+                                  <Award className="h-3 w-3 mr-1" />
+                                  Lowest Price
+                                </Badge>
+                              </div>
+                            )}
                             <img
                               src={product.image}
                               alt={product.title}
@@ -334,15 +430,50 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
                             <h3 className="font-semibold text-sm text-white truncate" title={product.title}>
                               {product.title}
                             </h3>
-                            <p className="text-xs text-orange-400 capitalize mb-2">{product.source}</p>
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-lg font-bold text-yellow-400">
-                                £{product.price.selling.toFixed(2)}
-                              </span>
+                              <p className="text-xs text-orange-400 capitalize">{product.sourceName || product.source}</p>
+                              {product.rating && (
+                                <div className="flex items-center text-yellow-400 text-xs">
+                                  <Star className="h-3 w-3 mr-1 fill-current" />
+                                  <span>{product.rating}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex flex-col">
+                                <span className="text-lg font-bold text-yellow-400">
+                                  £{product.price.selling.toFixed(2)}
+                                </span>
+                                {product.priceComparison && product.priceComparison.percentageFromAverage !== 0 && (
+                                  <div className="flex items-center text-xs">
+                                    {product.priceComparison.percentageFromAverage < 0 ? (
+                                      <>
+                                        <TrendingDown className="h-3 w-3 text-green-400 mr-1" />
+                                        <span className="text-green-400">
+                                          {Math.abs(product.priceComparison.percentageFromAverage)}% below avg
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <TrendingUp className="h-3 w-3 text-red-400 mr-1" />
+                                        <span className="text-red-400">
+                                          {product.priceComparison.percentageFromAverage}% above avg
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             <div className="flex items-center justify-between">
-                              <Badge className="text-xs bg-orange-500 text-white">
-                                {product.source}
+                              <Badge className={`text-xs ${
+                                product.priceComparison?.isLowest 
+                                  ? 'bg-green-600 text-white' 
+                                  : product.priceComparison?.isHighest
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-orange-500 text-white'
+                              }`}>
+                                {product.sourceName || product.source}
                               </Badge>
                               <a
                                 href={product.link}
@@ -358,7 +489,14 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
                         </>
                       ) : (
                         <>
-                          <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg bg-gray-700">
+                          <div className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg bg-gray-700 relative">
+                            {product.priceComparison?.isLowest && (
+                              <div className="absolute -top-1 -right-1 z-10">
+                                <Badge className="bg-green-600 text-white text-[10px] font-bold px-1 py-0.5">
+                                  <Award className="h-2 w-2" />
+                                </Badge>
+                              </div>
+                            )}
                             <img
                               src={product.image}
                               alt={product.title}
@@ -369,11 +507,44 @@ export default function WebScanner({ isAboveChatBot = true }: WebScannerProps) {
                             />
                           </div>
                           <div className="flex-1 ml-3 flex items-center justify-between">
-                            <div>
-                              <h3 className="font-semibold text-sm text-white truncate max-w-xs" title={product.title}>
-                                {product.title}
-                              </h3>
-                              <p className="text-xs text-orange-400">{product.source}</p>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <h3 className="font-semibold text-sm text-white truncate max-w-xs" title={product.title}>
+                                  {product.title}
+                                </h3>
+                                {product.rating && (
+                                  <div className="flex items-center text-yellow-400 text-xs ml-2">
+                                    <Star className="h-3 w-3 mr-1 fill-current" />
+                                    <span>{product.rating}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2 mb-1">
+                                <Badge className={`text-[10px] ${
+                                  product.priceComparison?.isLowest 
+                                    ? 'bg-green-600 text-white' 
+                                    : product.priceComparison?.isHighest
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-orange-500 text-white'
+                                }`}>
+                                  {product.sourceName || product.source}
+                                </Badge>
+                                {product.priceComparison && product.priceComparison.percentageFromAverage !== 0 && (
+                                  <div className="flex items-center text-xs">
+                                    {product.priceComparison.percentageFromAverage < 0 ? (
+                                      <span className="text-green-400 flex items-center">
+                                        <TrendingDown className="h-3 w-3 mr-1" />
+                                        {Math.abs(product.priceComparison.percentageFromAverage)}% below
+                                      </span>
+                                    ) : (
+                                      <span className="text-red-400 flex items-center">
+                                        <TrendingUp className="h-3 w-3 mr-1" />
+                                        {product.priceComparison.percentageFromAverage}% above
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                               <span className="text-lg font-bold text-yellow-400">
                                 £{product.price.selling.toFixed(2)}
                               </span>

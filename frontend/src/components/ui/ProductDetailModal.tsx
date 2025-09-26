@@ -9,8 +9,8 @@ interface ProductDetailModalProps {
   product: any
   isOpen: boolean
   onClose: () => void
-  onAddToCart: (product: any, quantity: number) => void
-  onAddToWishlist: (product: any) => void
+  onAddToCart: (product: any, quantity: number, size: string, color: string) => void
+  onAddToWishlist: (productId: string) => void
 }
 
 export default function ProductDetailModal({ 
@@ -25,19 +25,34 @@ export default function ProductDetailModal({
   const [selectedColor, setSelectedColor] = useState('')
   const [quantity, setQuantity] = useState(1)
 
+  const images = product?.images || [product?.primaryImage]
+  const sizes = product?.variants?.[0]?.sizes?.map(s => s.size) || ['S', 'M', 'L', 'XL', 'XXL']
+  const colors = product?.variants?.map(v => v.color) || ['Default', 'Black', 'White', 'Blue', 'Gray']
+
+  // Set default selections when product changes
+  React.useEffect(() => {
+    if (product && isOpen) {
+      setSelectedSize(sizes[0] || 'S')
+      setSelectedColor(colors[0] || 'Default')
+      setQuantity(1)
+      setSelectedImage(0)
+    }
+  }, [product, isOpen, sizes, colors])
+
+  // Early return after all hooks have been declared
   if (!isOpen || !product) return null
 
-  const images = product.images || [product.primaryImage]
-  const sizes = product.sizes || ['S', 'M', 'L', 'XL', 'XXL']
-  const colors = product.colors || ['Black', 'White', 'Blue', 'Gray']
-
   const handleAddToCart = () => {
-    onAddToCart(product, quantity)
+    if (!selectedSize || !selectedColor) {
+      alert('Please select size and color before adding to cart')
+      return
+    }
+    onAddToCart(product, quantity, selectedSize, selectedColor)
     onClose()
   }
 
   const handleAddToWishlist = () => {
-    onAddToWishlist(product)
+    onAddToWishlist(product._id || product.id)
   }
 
   return (

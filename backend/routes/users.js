@@ -7,20 +7,59 @@ const { auth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Get user's wishlist
+// Get user's wishlist - now returning actual products
 router.get('/wishlist', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
-      .populate({
-        path: 'wishlist',
-        match: { isActive: true },
-        select: 'title slug price.selling discount primaryImage rating.average category brand.name'
+    console.log('Getting wishlist for user:', req.user.id);
+    
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.log('User not found:', req.user.id);
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
       });
+    }
+
+    console.log('User wishlist IDs:', user.wishlist);
+
+    // Get wishlist products
+    const wishlistProducts = [];
+    
+    for (const productId of user.wishlist || []) {
+      try {
+        const product = await Product.findById(productId).select(
+          'title slug price discount primaryImage rating category brand variants isActive'
+        );
+        console.log('Product found:', product?.title, 'Active:', product?.isActive);
+        
+        if (product && product.isActive !== false) {
+          // Format the product for frontend compatibility
+          const formattedProduct = {
+            id: product._id,
+            title: product.title,
+            slug: product.slug,
+            primaryImage: product.primaryImage,
+            price: product.price || { selling: 0, original: 0 },
+            discount: product.discount || 0,
+            rating: product.rating || { average: 0, count: 0 },
+            category: product.category,
+            brand: product.brand || { name: 'ManVue' },
+            variants: product.variants || []
+          };
+          wishlistProducts.push(formattedProduct);
+        }
+      } catch (productError) {
+        console.log('Skipping invalid wishlist product:', productId, productError.message);
+      }
+    }
+
+    console.log('Returning', wishlistProducts.length, 'wishlist products');
 
     res.json({
       success: true,
       data: {
-        wishlist: user.wishlist
+        wishlist: wishlistProducts
       }
     });
 
@@ -28,7 +67,10 @@ router.get('/wishlist', auth, async (req, res) => {
     console.error('Get wishlist error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && { 
+        error: error.message
+      })
     });
   }
 });

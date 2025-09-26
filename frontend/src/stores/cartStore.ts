@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { useAuthStore } from './authStore'
 
 export interface Product {
   id: string
@@ -108,6 +109,14 @@ export const useCartStore = create<CartStore>()(
 
       // Actions
       addItem: async (productId: string, quantity: number, size: string, color: string) => {
+        const { isAuthenticated, token, user } = useAuthStore.getState()
+        
+        if (!isAuthenticated) {
+          toast.error('Please log in to add items to cart')
+          window.location.href = '/auth'
+          return
+        }
+
         set({ isLoading: true })
         try {
           await axios.post('/users/cart', {
@@ -128,6 +137,7 @@ export const useCartStore = create<CartStore>()(
             set({ isOpen: false })
           }, 3000)
         } catch (error: any) {
+          console.error('Add to cart error:', error.response?.data || error.message)
           const message = error.response?.data?.message || 'Failed to add item to cart'
           toast.error(message)
           throw error
@@ -200,8 +210,24 @@ export const useCartStore = create<CartStore>()(
       },
 
       loadCart: async () => {
+        const { isAuthenticated, token } = useAuthStore.getState()
+        
+        console.log('🛒 Loading cart... Auth:', isAuthenticated, 'Token:', !!token)
+        
+        if (!isAuthenticated) {
+          console.log('❌ Not authenticated, skipping cart load')
+          set({
+            items: [],
+            summary: initialSummary,
+            isLoading: false
+          })
+          return
+        }
+
         try {
+          console.log('📡 Making cart API request...')
           const response = await axios.get('/users/cart')
+          console.log('✅ Cart loaded successfully:', response.data)
           const { items, summary } = response.data.data
           
           set({
@@ -210,7 +236,7 @@ export const useCartStore = create<CartStore>()(
             isLoading: false
           })
         } catch (error: any) {
-          console.error('Failed to load cart:', error)
+          console.error('❌ Failed to load cart:', error.response?.data || error.message)
           set({
             items: [],
             summary: initialSummary,

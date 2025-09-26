@@ -113,12 +113,14 @@ export default function ProductsPage() {
     setSelectedProduct(null)
   }
 
-  const handleAddToCart = (product: any, quantity: number) => {
-    addToCart(product._id || product.id, product, quantity.toString(), '')
+  const handleAddToCart = (product: any, quantity: number, size?: string, color?: string) => {
+    const defaultSize = product?.variants?.[0]?.sizes?.[0]?.size || 'S'
+    const defaultColor = product?.variants?.[0]?.color || 'Default'
+    addToCart(product._id || product.id, quantity, size || defaultSize, color || defaultColor)
   }
 
-  const handleAddToWishlist = (product: any) => {
-    addToWishlist(product)
+  const handleAddToWishlist = (productId: string) => {
+    addToWishlist(productId)
   }
 
   const ProductCard = ({ product }: { product: any }) => (

@@ -185,11 +185,8 @@ export const useAuthStore = create<AuthStore>()(
           // Set token in axios headers if it exists
           axios.defaults.headers.common['Authorization'] = `Bearer ${state.token}`
           
-          // Verify token validity
-          get().refreshToken().catch(() => {
-            // Token is invalid, clear auth state
-            get().logout()
-          })
+          console.log('🔐 Initialized auth with token:', state.token.substring(0, 50) + '...')
+          console.log('✅ User authenticated:', state.user?.email)
         }
       },
 

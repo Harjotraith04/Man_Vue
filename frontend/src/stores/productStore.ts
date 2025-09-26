@@ -253,6 +253,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
 
       toast.success('Added to wishlist')
     } catch (error: any) {
+      console.error('Wishlist error:', error.response?.data || error.message)
       const message = error.response?.data?.message || 'Failed to add to wishlist'
       toast.error(message)
       throw error

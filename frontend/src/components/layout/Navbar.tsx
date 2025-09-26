@@ -264,7 +264,7 @@ export default function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleCart}
+              onClick={() => navigate('/cart')}
               className="relative h-10 w-10 hover:bg-blue-600/30 rounded-xl group hover-neon morph-button"
             >
               <ShoppingBag className="h-5 w-5 text-blue-400 group-hover:text-blue-300 transition-colors duration-200" />

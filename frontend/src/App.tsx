@@ -3,6 +3,9 @@ import { useEffect } from 'react'
 import { useAuthStore } from './stores/authStore'
 import { useCartStore } from './stores/cartStore'
 
+// Simple auth fix component
+import SimpleAuthFix from './components/SimpleAuthFix'
+
 // Layout Components
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
@@ -33,6 +36,7 @@ import AuthCallback from './components/auth/AuthCallback'
 import ChatBot from './components/ai/ChatBot'
 import WebScanner from './components/ai/WebScanner'
 
+
 function App() {
   const { initialize, isAuthenticated } = useAuthStore()
   const { loadCart } = useCartStore()
@@ -43,14 +47,20 @@ function App() {
   }, [initialize])
 
   useEffect(() => {
-    // Load cart data when user is authenticated
+    // Load cart data when user is authenticated (with a small delay to ensure auth is set)
     if (isAuthenticated) {
-      loadCart()
+      setTimeout(() => {
+        console.log('🚀 App: Loading cart after authentication')
+        loadCart()
+      }, 500)
     }
   }, [isAuthenticated, loadCart])
 
   return (
     <div className="min-h-screen bg-background flex flex-col dark relative">
+      {/* Auto-fix authentication */}
+      <SimpleAuthFix />
+      
       {/* Optimized Particle Background - Reduced count for performance */}
       <div className="fixed inset-0 pointer-events-none">
         {[...Array(20)].map((_, i) => (

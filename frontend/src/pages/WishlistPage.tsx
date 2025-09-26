@@ -41,26 +41,33 @@ interface WishlistProduct {
 
 export default function WishlistPage() {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const { user, isAuthenticated, token } = useAuthStore()
   const { addItem } = useCartStore()
   const [wishlistItems, setWishlistItems] = useState<WishlistProduct[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (user) {
+    console.log('💝 WishlistPage effect - Auth:', isAuthenticated, 'User:', !!user, 'Token:', !!token)
+    
+    if (isAuthenticated && user && token) {
+      console.log('💝 Fetching wishlist...')
       fetchWishlist()
     } else {
+      console.log('💝 Not authenticated, skipping wishlist load')
       setIsLoading(false)
     }
-  }, [user])
+  }, [isAuthenticated, user, token])
 
   const fetchWishlist = async () => {
     setIsLoading(true)
     try {
+      console.log('📡 Making wishlist API request...')
+      console.log('📡 Auth header:', axios.defaults.headers.common['Authorization'])
       const response = await axios.get('/users/wishlist')
+      console.log('✅ Wishlist loaded:', response.data)
       setWishlistItems(response.data.data.wishlist)
     } catch (error: any) {
-      console.error('Failed to fetch wishlist:', error)
+      console.error('❌ Failed to fetch wishlist:', error.response?.data || error.message)
       toast.error('Failed to load wishlist')
       setWishlistItems([])
     } finally {

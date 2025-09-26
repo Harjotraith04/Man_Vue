@@ -569,33 +569,62 @@ Respond in JSON format:
       isActive: true
     };
 
-    // Search based on type
+    // Enhanced search based on type with better matching
     switch (searchType) {
       case 'color':
         if (analysis.colors?.length > 0) {
-          searchQuery['variants.color'] = { 
-            $regex: new RegExp(analysis.colors.join('|'), 'i') 
-          };
+          searchQuery.$or = [
+            { 'variants.color': { $regex: new RegExp(analysis.colors.join('|'), 'i') } },
+            { 'variants.colorCode': { $regex: new RegExp(analysis.colors.join('|'), 'i') } },
+            { 'tags': { $in: analysis.colors } }
+          ];
         }
         break;
       
       case 'style':
+        const styleQueries = [];
         if (analysis.style) {
-          searchQuery.subCategory = analysis.style;
+          styleQueries.push({ subCategory: analysis.style });
+          styleQueries.push({ category: analysis.style });
+          styleQueries.push({ 'tags': { $in: [analysis.style] } });
+        }
+        if (analysis.aesthetic) {
+          styleQueries.push({ 'tags': { $in: [analysis.aesthetic] } });
+        }
+        if (styleQueries.length > 0) {
+          searchQuery.$or = styleQueries;
         }
         break;
       
       case 'similar':
       default:
+        const similarQueries = [];
+        
+        // Category matching
         if (analysis.categories?.length > 0) {
-          searchQuery.category = { $in: analysis.categories };
+          similarQueries.push({ category: { $in: analysis.categories } });
         }
         
-        // Use text search for additional matching
+        // Color matching (less strict for similar search)
+        if (analysis.colors?.length > 0) {
+          similarQueries.push({ 'variants.color': { $in: analysis.colors } });
+        }
+        
+        // Style matching
+        if (analysis.style) {
+          similarQueries.push({ subCategory: analysis.style });
+          similarQueries.push({ 'tags': { $in: [analysis.style] } });
+        }
+        
+        // Keywords matching
         if (analysis.search_keywords?.length > 0) {
-          searchQuery.$text = { 
-            $search: analysis.search_keywords.join(' ') 
-          };
+          similarQueries.push({ 
+            $text: { $search: analysis.search_keywords.join(' ') }
+          });
+        }
+        
+        if (similarQueries.length > 0) {
+          searchQuery.$or = similarQueries;
         }
         break;
     }

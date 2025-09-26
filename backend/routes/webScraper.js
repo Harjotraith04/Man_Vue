@@ -2,187 +2,389 @@ const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { body, validationResult } = require('express-validator');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const Product = require('../models/Product');
+
+// Add stealth plugin to avoid detection
+puppeteer.use(StealthPlugin());
+
 const router = express.Router();
 
-// List of shopping websites to scrape
+// Enhanced shopping websites configuration for real scraping
 const shoppingSites = {
   amazon: {
     baseUrl: 'https://www.amazon.co.uk',
     searchUrl: 'https://www.amazon.co.uk/s?k=',
+    name: 'Amazon UK',
     selectors: {
       products: '[data-component-type="s-search-result"]',
-      title: 'h2 a span',
-      price: '.a-price-whole',
-      image: '.s-image',
-      link: 'h2 a',
-      rating: '.a-icon-alt'
-    }
+      title: 'h2 a span, [data-cy="title-recipe-title"] span',
+      price: '.a-price-whole, .a-price .a-offscreen',
+      priceSymbol: '.a-price-symbol',
+      image: '.s-image, img[data-image-latency]',
+      link: 'h2 a, [data-cy="title-recipe-title"]',
+      rating: '.a-icon-alt, .a-star-5 .a-icon-alt',
+      originalPrice: '.a-price.a-text-price .a-offscreen'
+    },
+    waitSelector: '[data-component-type="s-search-result"]',
+    maxProducts: 20
   },
   ebay: {
     baseUrl: 'https://www.ebay.co.uk',
     searchUrl: 'https://www.ebay.co.uk/sch/i.html?_nkw=',
+    name: 'eBay UK',
     selectors: {
-      products: '.s-item',
-      title: '.s-item__title',
-      price: '.s-item__price',
-      image: '.s-item__image img',
+      products: '.s-item:not(.s-item--watch-at-auction)',
+      title: '.s-item__title, .s-item__title span',
+      price: '.s-item__price, .s-item__detail .s-item__price',
+      image: '.s-item__image img, .s-item__wrapper img',
       link: '.s-item__link',
-      rating: '.ebay-review-stars'
-    }
+      rating: '.x-star-rating, .ebay-review-stars'
+    },
+    waitSelector: '.s-item',
+    maxProducts: 15
   },
   next: {
     baseUrl: 'https://www.next.co.uk',
     searchUrl: 'https://www.next.co.uk/search?w=',
+    name: 'Next UK',
     selectors: {
-      products: '.ProductItem',
-      title: '.Title',
-      price: '.Price',
-      image: '.ProductImage img',
+      products: '.ProductItem, article[data-testid="plp-product-item"]',
+      title: '.Title, [data-testid="plp-product-item-title"]',
+      price: '.Price, [data-testid="plp-product-item-price"]',
+      image: '.ProductImage img, [data-testid="plp-product-item-image"] img',
       link: 'a',
-      rating: '.Rating'
-    }
-  },
-  asos: {
-    baseUrl: 'https://www.asos.com',
-    searchUrl: 'https://www.asos.com/search/?q=',
-    selectors: {
-      products: '[data-testid="product-tile"]',
-      title: '[data-testid="product-tile-name"]',
-      price: '[data-testid="current-price"]',
-      image: 'img',
-      link: 'a',
-      rating: '.stars'
-    }
-  },
-  johnlewis: {
-    baseUrl: 'https://www.johnlewis.com',
-    searchUrl: 'https://www.johnlewis.com/search?search-term=',
-    selectors: {
-      products: '.c-product-tile',
-      title: '.c-product-tile__title',
-      price: '.c-product-tile__price',
-      image: '.c-product-tile__image img',
-      link: 'a',
-      rating: '.c-product-tile__rating'
-    }
+      rating: '.Rating, .StarRating'
+    },
+    waitSelector: '.ProductItem, article[data-testid="plp-product-item"]',
+    maxProducts: 12
   }
 };
 
-// Mock data generator for testing - simulates real products from different sites
-function generateMockProducts(query, sites, limit = 10) {
-  const mockProducts = [
-    // Men's Shirts
-    { keywords: ['shirt', 'shirts', 'mens'], products: [
-      { title: 'Classic White Cotton Shirt - Slim Fit', price: 29.99, source: 'amazon', image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=400&fit=crop' },
-      { title: 'Oxford Blue Long Sleeve Shirt', price: 34.99, source: 'next', image: 'https://images.unsplash.com/photo-1564859228273-274232fdb516?w=400&h=400&fit=crop' },
-      { title: 'Premium Cotton Formal Shirt', price: 24.99, source: 'ebay', image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400&h=400&fit=crop' },
-      { title: 'Casual Check Shirt - Regular Fit', price: 19.99, source: 'asos', image: 'https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=400&h=400&fit=crop' },
-    ]},
-    // Sneakers
-    { keywords: ['sneaker', 'sneakers', 'trainer', 'trainers', 'shoe', 'shoes'], products: [
-      { title: 'Nike Air Max 270 - White/Black', price: 89.99, source: 'amazon', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop' },
-      { title: 'Adidas Ultraboost 22 - Core Black', price: 149.99, source: 'johnlewis', image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400&h=400&fit=crop' },
-      { title: 'Puma RS-X³ Puzzle - White', price: 79.99, source: 'asos', image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=400&h=400&fit=crop' },
-      { title: 'New Balance 574 - Grey/Navy', price: 69.99, source: 'next', image: 'https://images.unsplash.com/photo-1539185441755-769473a23570?w=400&h=400&fit=crop' },
-    ]},
-    // Jeans
-    { keywords: ['jean', 'jeans', 'denim'], products: [
-      { title: 'Levi\'s 511 Slim Fit Jeans - Dark Wash', price: 59.99, source: 'amazon', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&h=400&fit=crop' },
-      { title: 'Skinny Stretch Jeans - Blue', price: 39.99, source: 'next', image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=400&fit=crop' },
-      { title: 'Regular Fit Denim Jeans', price: 34.99, source: 'ebay', image: 'https://images.unsplash.com/photo-1506629905607-d9d36334f0fd?w=400&h=400&fit=crop' },
-      { title: 'Premium Selvedge Denim', price: 89.99, source: 'asos', image: 'https://images.unsplash.com/photo-1475178626620-a4d074967452?w=400&h=400&fit=crop' },
-    ]},
-    // Dresses
-    { keywords: ['dress', 'dresses', 'women'], products: [
-      { title: 'Floral Summer Dress - Midi Length', price: 45.99, source: 'next', image: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&h=400&fit=crop' },
-      { title: 'Black Evening Dress - Elegant', price: 79.99, source: 'asos', image: 'https://images.unsplash.com/photo-1566479179817-80ebdc99b597?w=400&h=400&fit=crop' },
-      { title: 'Casual Day Dress - Cotton', price: 29.99, source: 'amazon', image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400&h=400&fit=crop' },
-      { title: 'Designer Cocktail Dress', price: 129.99, source: 'johnlewis', image: 'https://images.unsplash.com/photo-1505022610485-0249ba5b3675?w=400&h=400&fit=crop' },
-    ]},
-    // Jackets
-    { keywords: ['jacket', 'jackets', 'coat', 'coats'], products: [
-      { title: 'Leather Biker Jacket - Black', price: 159.99, source: 'asos', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop' },
-      { title: 'Denim Jacket - Classic Blue', price: 49.99, source: 'next', image: 'https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?w=400&h=400&fit=crop' },
-      { title: 'Winter Parka - Navy', price: 89.99, source: 'amazon', image: 'https://images.unsplash.com/photo-1544441892-794166f1e3be?w=400&h=400&fit=crop' },
-      { title: 'Wool Overcoat - Charcoal', price: 199.99, source: 'johnlewis', image: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400&h=400&fit=crop' },
-    ]}
-  ];
+// Browser management
+let browserInstance = null;
 
-  // Find matching products based on query
+async function getBrowser() {
+  if (!browserInstance) {
+    browserInstance = await puppeteer.launch({
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-features=VizDisplayCompositor',
+        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      ]
+    });
+  }
+  return browserInstance;
+}
+
+// Clean price text and extract numeric value
+function cleanPrice(priceText) {
+  if (!priceText) return 0;
+  
+  // Remove common currency symbols and clean the string
+  const cleaned = priceText
+    .replace(/[£$€,\s]/g, '')
+    .replace(/from|to|was|now/gi, '')
+    .replace(/\D*(\d+\.?\d*)\D*/, '$1');
+  
+  const price = parseFloat(cleaned);
+  return isNaN(price) ? 0 : price;
+}
+
+// Extract relative URL to absolute URL
+function makeAbsoluteUrl(relativeUrl, baseUrl) {
+  if (!relativeUrl) return baseUrl;
+  
+  if (relativeUrl.startsWith('http')) {
+    return relativeUrl;
+  }
+  
+  if (relativeUrl.startsWith('//')) {
+    return 'https:' + relativeUrl;
+  }
+  
+  if (relativeUrl.startsWith('/')) {
+    const base = new URL(baseUrl);
+    return base.origin + relativeUrl;
+  }
+  
+  return baseUrl + '/' + relativeUrl;
+}
+
+// Real scraping function using Puppeteer
+async function scrapeSite(siteKey, query, limit = 10) {
+  const site = shoppingSites[siteKey];
+  if (!site) {
+    console.log(`Site ${siteKey} not configured`);
+    return [];
+  }
+
+  let page = null;
+  
+  try {
+    console.log(`🔍 Scraping ${site.name} for "${query}"`);
+    
+    const browser = await getBrowser();
+    page = await browser.newPage();
+    
+    // Set realistic viewport and user agent
+    await page.setViewport({ width: 1366, height: 768 });
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    
+    // Block unnecessary resources to speed up loading
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const resourceType = req.resourceType();
+      if (resourceType === 'stylesheet' || resourceType === 'font' || resourceType === 'media') {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
+
+    const searchUrl = site.searchUrl + encodeURIComponent(query);
+    console.log(`📡 Loading: ${searchUrl}`);
+    
+    // Navigate to the search page
+    await page.goto(searchUrl, {
+      waitUntil: 'networkidle0',
+      timeout: 30000
+    });
+
+    // Wait for products to load
+    try {
+      await page.waitForSelector(site.waitSelector, { timeout: 10000 });
+    } catch (e) {
+      console.log(`⚠️ Wait selector timeout for ${site.name}, continuing...`);
+    }
+
+    // Small delay to ensure dynamic content loads
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Extract products
+    const products = await page.evaluate((selectors, siteKey, maxProducts) => {
+      const products = [];
+      const productElements = document.querySelectorAll(selectors.products);
+      
+      console.log(`Found ${productElements.length} product elements`);
+      
+      for (let i = 0; i < Math.min(productElements.length, maxProducts); i++) {
+        const element = productElements[i];
+        
+        try {
+          // Extract title
+          const titleEl = element.querySelector(selectors.title);
+          const title = titleEl ? titleEl.textContent.trim() : '';
+          
+          if (!title || title.length < 3) continue;
+          
+          // Extract price
+          const priceEl = element.querySelector(selectors.price);
+          let priceText = priceEl ? priceEl.textContent.trim() : '';
+          
+          // Extract image
+          const imageEl = element.querySelector(selectors.image);
+          let imageSrc = '';
+          if (imageEl) {
+            imageSrc = imageEl.src || imageEl.getAttribute('data-src') || imageEl.getAttribute('data-lazy-src') || '';
+          }
+          
+          // Extract link
+          const linkEl = element.querySelector(selectors.link);
+          let productLink = '';
+          if (linkEl) {
+            productLink = linkEl.href || linkEl.getAttribute('href') || '';
+          }
+          
+          // Extract rating if available
+          const ratingEl = element.querySelector(selectors.rating);
+          const rating = ratingEl ? ratingEl.textContent.trim() : '';
+          
+          if (title && priceText) {
+            products.push({
+              title: title.substring(0, 100), // Limit title length
+              priceText,
+              image: imageSrc,
+              link: productLink,
+              rating,
+              source: siteKey
+            });
+          }
+        } catch (error) {
+          console.log('Error extracting product:', error.message);
+        }
+      }
+      
+      return products;
+    }, site.selectors, siteKey, site.maxProducts);
+
+    console.log(`✅ Extracted ${products.length} products from ${site.name}`);
+    
+    // Process and format products
+    return products.map(product => ({
+      title: product.title,
+      price: {
+        selling: cleanPrice(product.priceText),
+        currency: 'GBP',
+        original: product.priceText
+      },
+      image: makeAbsoluteUrl(product.image, site.baseUrl),
+      link: makeAbsoluteUrl(product.link, site.baseUrl),
+      source: siteKey,
+      sourceName: site.name,
+      rating: product.rating,
+      category: 'external',
+      scrapedAt: new Date().toISOString()
+    })).filter(product => product.price.selling > 0); // Filter out products without valid prices
+
+  } catch (error) {
+    console.error(`❌ Error scraping ${site.name}:`, error.message);
+    return [];
+  } finally {
+    if (page) {
+      await page.close();
+    }
+  }
+}
+
+// Enhanced mock data for demonstration (realistic product data)
+function generateRealisticProducts(query, sites, limit = 24) {
+  const productDatabase = {
+    "men shirts": [
+      { title: "Men's Premium Cotton Formal Shirt - White", price: 35.99, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400", rating: "4.5 stars" },
+      { title: "Oxford Button Down Shirt - Light Blue", price: 42.50, image: "https://images.unsplash.com/photo-1564859228273-274232fdb516?w=400", rating: "4.3 stars" },
+      { title: "Casual Check Shirt - Navy & White", price: 28.99, image: "https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=400", rating: "4.1 stars" },
+      { title: "Slim Fit Business Shirt - Charcoal", price: 39.99, image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400", rating: "4.4 stars" },
+      { title: "Cotton Blend Dress Shirt - Pink", price: 33.75, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400", rating: "4.2 stars" }
+    ],
+    "sneakers": [
+      { title: "Nike Air Max 270 - Triple White", price: 129.99, image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", rating: "4.7 stars" },
+      { title: "Adidas Ultraboost 22 - Core Black", price: 179.95, image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400", rating: "4.8 stars" },
+      { title: "New Balance 574 - Grey/Navy", price: 84.99, image: "https://images.unsplash.com/photo-1539185441755-769473a23570?w=400", rating: "4.4 stars" },
+      { title: "Puma RS-X³ - White/Red", price: 109.99, image: "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=400", rating: "4.3 stars" },
+      { title: "Converse Chuck 70 - Black High Top", price: 74.99, image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", rating: "4.5 stars" }
+    ],
+    "jeans": [
+      { title: "Levi's 511 Slim Fit Jeans - Dark Wash", price: 68.00, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400", rating: "4.6 stars" },
+      { title: "Skinny Stretch Denim - Indigo Blue", price: 45.99, image: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400", rating: "4.2 stars" },
+      { title: "Regular Fit Jeans - Medium Wash", price: 52.50, image: "https://images.unsplash.com/photo-1506629905607-d9d36334f0fd?w=400", rating: "4.1 stars" },
+      { title: "Premium Selvedge Denim - Raw", price: 145.00, image: "https://images.unsplash.com/photo-1475178626620-a4d074967452?w=400", rating: "4.7 stars" }
+    ],
+    "women dresses": [
+      { title: "Summer Floral Midi Dress", price: 58.99, image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400", rating: "4.4 stars" },
+      { title: "Black Cocktail Dress - Elegant", price: 89.95, image: "https://images.unsplash.com/photo-1566479179817-80ebdc99b597?w=400", rating: "4.6 stars" },
+      { title: "Casual Cotton Day Dress", price: 34.99, image: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400", rating: "4.0 stars" }
+    ]
+  };
+
   const queryLower = query.toLowerCase();
   let matchedProducts = [];
 
-  for (const category of mockProducts) {
-    for (const keyword of category.keywords) {
-      if (queryLower.includes(keyword)) {
-        matchedProducts = [...matchedProducts, ...category.products];
-        break;
-      }
+  // Find best matching category
+  for (const [category, products] of Object.entries(productDatabase)) {
+    if (queryLower.includes(category.toLowerCase()) || 
+        category.toLowerCase().includes(queryLower) ||
+        queryLower.split(' ').some(word => category.toLowerCase().includes(word))) {
+      matchedProducts = products;
+      break;
     }
   }
 
-  // If no specific matches, show general products
+  // If no specific match, use all products
   if (matchedProducts.length === 0) {
-    matchedProducts = mockProducts.flatMap(cat => cat.products);
+    matchedProducts = Object.values(productDatabase).flat();
   }
 
-  // Filter by selected sites and add variety
-  const filteredProducts = matchedProducts
-    .filter(product => sites.includes(product.source))
-    .map(product => ({
-      title: product.title,
-      price: {
-        selling: product.price + Math.random() * 20 - 10, // Add price variation
-        currency: 'GBP'
-      },
-      image: product.image,
-      link: `https://www.${product.source}.com/product/${product.title.toLowerCase().replace(/\s+/g, '-')}`,
-      source: product.source,
-      category: 'external'
-    }));
+  // Generate products for each site
+  const generatedProducts = [];
+  sites.forEach((siteKey, siteIndex) => {
+    const site = shoppingSites[siteKey];
+    if (!site) return;
 
-  // Shuffle and limit results
-  return filteredProducts
-    .sort(() => Math.random() - 0.5)
-    .slice(0, limit)
-    .map(product => ({
+    matchedProducts.slice(0, Math.ceil(limit / sites.length)).forEach((product, index) => {
+      const priceVariation = (Math.random() - 0.5) * 20; // ±10 price variation
+      const finalPrice = Math.max(9.99, product.price + priceVariation);
+      
+      generatedProducts.push({
+        title: product.title,
+        price: {
+          selling: Math.round(finalPrice * 100) / 100,
+          currency: 'GBP',
+          original: `£${Math.round(finalPrice * 100) / 100}`
+        },
+        image: product.image,
+        link: `${site.baseUrl}/s?k=${encodeURIComponent(product.title)}`,
+        source: siteKey,
+        sourceName: site.name,
+        rating: product.rating,
+        category: 'external',
+        scrapedAt: new Date().toISOString()
+      });
+    });
+  });
+
+  return generatedProducts.slice(0, limit);
+}
+
+// Aggregate products from multiple sites (Sky Scanner for Clothes approach)
+async function scrapeMultipleSites(query, sites, limit = 24) {
+  console.log(`🚀 Starting multi-site scraping for "${query}" across ${sites.length} sites`);
+  
+  // First try real scraping
+  const scrapePromises = sites.map(async (siteKey) => {
+    try {
+      const products = await scrapeSite(siteKey, query, Math.ceil(limit / sites.length));
+      console.log(`Real scraping ${siteKey}: ${products.length} products found`);
+      return products;
+    } catch (error) {
+      console.error(`Error scraping ${siteKey}:`, error.message);
+      return [];
+    }
+  });
+  
+  // Run scraping in parallel for all sites
+  const results = await Promise.all(scrapePromises);
+  
+  // Flatten and combine results
+  const realProducts = results.flat();
+  
+  console.log(`✅ Real scraping results: ${realProducts.length} products`);
+  
+  // If real scraping returned few results, supplement with realistic mock data
+  if (realProducts.length < limit / 2) {
+    console.log('🔄 Supplementing with realistic product data...');
+    const mockProducts = generateRealisticProducts(query, sites, limit);
+    
+    // Mark mock products as preview/demo
+    const enhancedMockProducts = mockProducts.map(product => ({
       ...product,
-      price: {
-        ...product.price,
-        selling: Math.max(9.99, Math.round(product.price.selling * 100) / 100)
-      }
+      title: product.title + " (Demo)",
+      isDemo: true
     }));
-}
-
-// Helper function to scrape a single site (currently using mock data due to anti-bot protection)
-async function scrapeSite(site, query, limit = 10) {
-  try {
-    // For now, we'll simulate scraping with realistic mock data
-    // Real scraping would require more sophisticated methods like:
-    // - Headless browsers (Puppeteer/Playwright)
-    // - Rotating proxies
-    // - CAPTCHA solving services
-    // - Request delays and rate limiting
     
-    console.log(`Simulating scrape of ${site.baseUrl} for query: "${query}"`);
+    // Combine real and mock products
+    const combinedProducts = [...realProducts, ...enhancedMockProducts].slice(0, limit);
     
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+    // Sort by price to help users compare
+    combinedProducts.sort((a, b) => a.price.selling - b.price.selling);
     
-    // Generate mock products for this site
-    const mockProducts = generateMockProducts(query, [site.baseUrl.replace('https://www.', '').replace('.co.uk', '').replace('.com', '')], limit);
-    
-    return mockProducts.filter(product => 
-      product.source === site.baseUrl.replace('https://www.', '').replace('.co.uk', '').replace('.com', '')
-    );
-
-  } catch (error) {
-    console.error(`Error scraping ${site.baseUrl}:`, error.message);
-    return [];
+    console.log(`✅ Combined results: ${combinedProducts.length} products (${realProducts.length} real + ${enhancedMockProducts.length} demo)`);
+    return combinedProducts;
   }
+  
+  // Sort real products by price
+  realProducts.sort((a, b) => a.price.selling - b.price.selling);
+  
+  console.log(`✅ Total products scraped: ${realProducts.length}`);
+  
+  return realProducts.slice(0, limit);
 }
 
-// Compare ManVue database products with external shopping websites
+// Real product scraping from multiple shopping sites (Sky Scanner for Clothes)
 router.post('/scrape-products', [
   body('query').trim().isLength({ min: 2, max: 100 }).withMessage('Query must be 2-100 characters'),
   body('sites').optional().isArray().withMessage('Sites must be an array'),
@@ -198,146 +400,81 @@ router.post('/scrape-products', [
       });
     }
 
-    const { query, sites = ['amazon', 'ebay', 'next'], limit = 12 } = req.body;
+    const { query, sites = ['amazon', 'ebay', 'next'], limit = 24 } = req.body;
 
-    console.log(`Comparing ManVue products with external sites for query: "${query}"`);
+    console.log(`🔍 Starting real product scraping for: "${query}"`);
 
-    // Step 1: Search ManVue database for matching products
-    let dbProducts = [];
-    
-    // Check if query matches any specific category
-    const queryLower = query.toLowerCase();
-    let matchedCategory = null;
-    
-    if (queryLower.includes('shirt')) {
-      matchedCategory = queryLower.includes('t-shirt') || queryLower.includes('tshirt') ? 'tshirts' : 'shirts';
-    } else if (queryLower.includes('jean')) {
-      matchedCategory = 'jeans';
-    } else if (queryLower.includes('shoe') || queryLower.includes('sneaker')) {
-      matchedCategory = 'shoes';
-    } else if (queryLower.includes('accessorie')) {
-      matchedCategory = 'accessories';
-    } else if (queryLower.includes('kurta') || queryLower.includes('ethnic')) {
-      matchedCategory = 'kurtas';
-    } else if (queryLower.includes('formal')) {
-      matchedCategory = 'formal';
-    }
-    
-    if (matchedCategory) {
-      dbProducts = await Product.find({
-        category: matchedCategory,
-        isActive: true
-      }).select('title price category brand variants slug').lean().limit(8);
-    } else {
-      // General search across all products
-      dbProducts = await Product.find({
-        $or: [
-          { title: { $regex: query, $options: 'i' } },
-          { category: { $regex: query, $options: 'i' } },
-          { tags: { $regex: query, $options: 'i' } }
-        ],
-        isActive: true
-      }).select('title price category brand variants slug').lean().limit(8);
-    }
-
-    console.log(`Found ${dbProducts.length} matching products in ManVue database`);
-
-    // Step 2: Create external shopping comparisons with real ManVue products
-    const externalComparisons = [];
-    
-    if (dbProducts.length > 0) {
-      for (const dbProduct of dbProducts.slice(0, 6)) {
-        // Generate search terms for this specific product
-        const searchTerms = [
-          `${dbProduct.title.split(' ').slice(0, 3).join(' ')}`, // First 3 words
-          `${dbProduct.brand?.name || ''} ${dbProduct.category}`,
-          `${dbProduct.category} ${dbProduct.title.split(' ')[0]}`
-        ].filter(term => term.trim().length > 0);
-
-        // Create external site links for each search term
-        for (const searchTerm of searchTerms.slice(0, 1)) { // Limit to 1 search term per product
-          sites.forEach(siteName => {
-            const site = shoppingSites[siteName];
-            if (site) {
-              const searchUrl = site.searchUrl + encodeURIComponent(searchTerm);
-              
-              externalComparisons.push({
-                title: `${dbProduct.title} - Compare on ${site.baseUrl.replace('https://www.', '').replace('.co.uk', '').replace('.com', '')}`,
-                price: {
-                  selling: dbProduct.price?.selling || 0,
-                  currency: 'GBP'
-                },
-                image: dbProduct.variants?.[0]?.images?.[0]?.url || '/placeholder-image.jpg',
-                link: searchUrl, // Real working search URL
-                source: siteName,
-                category: 'comparison',
-                manvueProduct: {
-                  title: dbProduct.title,
-                  price: dbProduct.price?.selling || 0,
-                  slug: dbProduct.slug,
-                  internalLink: `/product/${dbProduct.slug}`
-                },
-                searchTerm,
-                isComparison: true
-              });
-            }
-          });
-        }
-      }
-    } else {
-      // If no ManVue products found, create general category searches
-      const generalSearches = [
-        { term: query, description: `Search for "${query}"` },
-        { term: `${query} UK`, description: `UK ${query}` }
-      ];
-
-      generalSearches.forEach(search => {
-        sites.forEach(siteName => {
-          const site = shoppingSites[siteName];
-          if (site) {
-            const searchUrl = site.searchUrl + encodeURIComponent(search.term);
-            
-            externalComparisons.push({
-              title: `${search.description} on ${site.baseUrl.replace('https://www.', '').replace('.co.uk', '').replace('.com', '')}`,
-              price: {
-                selling: 0,
-                currency: 'GBP'
-              },
-              image: '/placeholder-image.jpg',
-              link: searchUrl,
-              source: siteName,
-              category: 'search',
-              searchTerm: search.term,
-              isSearch: true
-            });
-          }
-        });
+    // Filter valid sites
+    const validSites = sites.filter(site => shoppingSites[site]);
+    if (validSites.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No valid sites provided'
       });
     }
 
-    // Step 3: Limit and randomize results
-    const finalResults = externalComparisons
-      .sort(() => Math.random() - 0.5) // Randomize
-      .slice(0, limit);
+    // Scrape products from multiple sites in parallel
+    const scrapedProducts = await scrapeMultipleSites(query, validSites, limit);
+
+    // Add price comparison features
+    const productsWithComparison = scrapedProducts.map(product => {
+      const allPrices = scrapedProducts
+        .filter(p => p.price.selling > 0)
+        .map(p => p.price.selling);
+      
+      const avgPrice = allPrices.length > 0 
+        ? allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length 
+        : 0;
+      
+      const minPrice = Math.min(...allPrices);
+      const maxPrice = Math.max(...allPrices);
+      
+      return {
+        ...product,
+        priceComparison: {
+          isLowest: product.price.selling === minPrice && allPrices.length > 1,
+          isHighest: product.price.selling === maxPrice && allPrices.length > 1,
+          percentageFromAverage: avgPrice > 0 
+            ? Math.round(((product.price.selling - avgPrice) / avgPrice) * 100)
+            : 0,
+          avgPrice: Math.round(avgPrice * 100) / 100
+        }
+      };
+    });
+
+    // Group products by source for better display
+    const productsBySource = {};
+    productsWithComparison.forEach(product => {
+      if (!productsBySource[product.source]) {
+        productsBySource[product.source] = [];
+      }
+      productsBySource[product.source].push(product);
+    });
 
     res.json({
       success: true,
       data: {
-        products: finalResults,
+        products: productsWithComparison,
         query,
-        totalFound: finalResults.length,
-        sitesScraped: sites.filter(siteName => shoppingSites[siteName]),
-        manvueMatches: dbProducts.length,
+        totalFound: productsWithComparison.length,
+        sitesScraped: validSites,
+        productsBySource,
+        priceRange: scrapedProducts.length > 0 ? {
+          min: Math.min(...scrapedProducts.filter(p => p.price.selling > 0).map(p => p.price.selling)),
+          max: Math.max(...scrapedProducts.filter(p => p.price.selling > 0).map(p => p.price.selling)),
+          average: scrapedProducts.filter(p => p.price.selling > 0)
+            .reduce((sum, p, _, arr) => sum + p.price.selling / arr.length, 0)
+        } : null,
         scrapedAt: new Date().toISOString(),
-        isComparison: true
+        isRealScraping: true
       }
     });
 
   } catch (error) {
-    console.error('Web scraping error:', error);
+    console.error('❌ Web scraping error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to scrape products',
+      message: 'Failed to scrape products from shopping sites',
       error: error.message
     });
   }
@@ -366,9 +503,10 @@ router.get('/popular-categories', (req, res) => {
 router.get('/sites', (req, res) => {
   const sites = Object.keys(shoppingSites).map(key => ({
     id: key,
-    name: key.charAt(0).toUpperCase() + key.slice(1),
+    name: shoppingSites[key].name || key.charAt(0).toUpperCase() + key.slice(1),
     baseUrl: shoppingSites[key].baseUrl,
-    logo: `https://www.google.com/s2/favicons?domain=${shoppingSites[key].baseUrl}&sz=32`
+    logo: `https://www.google.com/s2/favicons?domain=${shoppingSites[key].baseUrl}&sz=32`,
+    maxProducts: shoppingSites[key].maxProducts
   }));
 
   res.json({
@@ -376,5 +514,33 @@ router.get('/sites', (req, res) => {
     data: { sites }
   });
 });
+
+// Health check endpoint
+router.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Web Scraper API is running',
+    availableSites: Object.keys(shoppingSites),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Cleanup function for browser instance
+async function cleanup() {
+  if (browserInstance) {
+    console.log('🧹 Closing browser instance...');
+    try {
+      await browserInstance.close();
+      browserInstance = null;
+    } catch (error) {
+      console.error('Error closing browser:', error.message);
+    }
+  }
+}
+
+// Handle process termination
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
+process.on('exit', cleanup);
 
 module.exports = router;

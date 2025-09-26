@@ -12,20 +12,20 @@ export default function CartPage() {
   const { 
     items, 
     isLoading, 
-    totalItems, 
-    subtotal, 
-    tax, 
-    shipping, 
-    total,
-    fetchCart,
+    summary,
+    loadCart,
     updateQuantity,
     removeItem,
     clearCart
   } = useCartStore()
 
+  // Extract summary values
+  const { totalItems = 0, subtotal = 0, tax = 0, shipping = 0, total = 0 } = summary || {}
+
   useEffect(() => {
-    fetchCart()
-  }, [fetchCart])
+    console.log('🛒 CartPage loading...')
+    loadCart()
+  }, [loadCart])
 
   const handleQuantityUpdate = async (productId: string, size: string, color: string, newQuantity: number) => {
     if (newQuantity < 1) {
@@ -80,19 +80,21 @@ export default function CartPage() {
 
   if (!items || items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <ShoppingCart className="h-24 w-24 text-gray-400 mx-auto mb-6" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Your Cart is Empty</h1>
-          <p className="text-gray-600 mb-8 text-lg">
-            Looks like you haven't added any items to your cart yet.
-          </p>
-          <Link to="/products">
-            <Button size="lg">
-              <ShoppingBag className="mr-2 h-5 w-5" />
-              Start Shopping
-            </Button>
-          </Link>
+      <div className="container mx-auto px-4 py-8 min-h-screen">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl p-12 text-center border border-blue-200">
+            <ShoppingCart className="h-32 w-32 text-blue-400 mx-auto mb-8" />
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">🛒 Your Cart is Empty</h1>
+            <p className="text-gray-600 mb-8 text-xl">
+              Ready to find some amazing products? Let's start shopping! ✨
+            </p>
+            <Link to="/products">
+              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-4 text-lg">
+                <ShoppingBag className="mr-3 h-6 w-6" />
+                Discover Products
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -102,26 +104,28 @@ export default function CartPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
-            <p className="text-gray-600 mt-2">
-              {totalItems} {totalItems === 1 ? 'item' : 'items'} in your cart
-            </p>
-          </div>
-          <div className="flex space-x-4">
-            <Link to="/products">
-              <Button variant="outline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Continue Shopping
-              </Button>
-            </Link>
-            {items.length > 0 && (
-              <Button variant="destructive" onClick={handleClearCart}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Clear Cart
-              </Button>
-            )}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8 mb-8 border border-blue-200">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">🛍️ Shopping Cart</h1>
+              <p className="text-xl text-gray-700">
+                {totalItems} {totalItems === 1 ? 'amazing item' : 'amazing items'} ready for checkout
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <Link to="/products">
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-6 py-3">
+                  <ArrowLeft className="mr-2 h-5 w-5" />
+                  Continue Shopping
+                </Button>
+              </Link>
+              {items.length > 0 && (
+                <Button variant="outline" onClick={handleClearCart} className="border-red-200 text-red-600 hover:bg-red-50 px-6 py-3">
+                  <Trash2 className="mr-2 h-5 w-5" />
+                  Clear Cart
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -129,19 +133,25 @@ export default function CartPage() {
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
-              <Card key={`${item.product.id}-${item.size}-${item.color}`}>
-                <CardContent className="p-6">
+              <Card key={`${item.product.id}-${item.size}-${item.color}`} className="shadow-lg hover:shadow-xl transition-shadow duration-300 border-l-4 border-l-blue-500 bg-gradient-to-r from-gray-800 to-gray-900">
+                <CardContent className="p-8">
                   <div className="flex flex-col sm:flex-row gap-4">
-                    {/* Product Image */}
+                    {/* Product Image - Enhanced */}
                     <Link 
                       to={`/product/${item.product.slug}`}
-                      className="w-full sm:w-32 h-32 flex-shrink-0"
+                      className="w-full sm:w-48 h-48 flex-shrink-0"
                     >
-                      <img
-                        src={item.product.primaryImage || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop'}
-                        alt={item.product.title}
-                        className="w-full h-full object-cover rounded-lg hover:opacity-80 transition-opacity"
-                      />
+                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
+                        <img
+                          src={item.product.primaryImage || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop'}
+                          alt={item.product.title}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop';
+                          }}
+                        />
+                      </div>
                     </Link>
 
                     {/* Product Details */}
@@ -150,11 +160,11 @@ export default function CartPage() {
                         <div>
                           <Link 
                             to={`/product/${item.product.slug}`}
-                            className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                            className="text-xl font-bold text-white hover:text-blue-300 transition-colors block mb-1"
                           >
                             {item.product.title}
                           </Link>
-                          <p className="text-gray-600">{item.product.brand?.name}</p>
+                          <p className="text-lg text-blue-300 font-medium">{item.product.brand?.name || 'ManVue'}</p>
                         </div>
                         <Button
                           variant="ghost"
@@ -167,24 +177,22 @@ export default function CartPage() {
                       </div>
 
                       {/* Variant Info */}
-                      <div className="flex space-x-4 mb-4">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-600">Size:</span>
-                          <Badge variant="outline">{item.size}</Badge>
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        <div className="bg-blue-500/20 border border-blue-400/30 rounded-lg px-3 py-2">
+                          <span className="text-sm font-medium text-blue-300">Size: {item.size}</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-600">Color:</span>
-                          <Badge variant="outline">{item.color}</Badge>
+                        <div className="bg-purple-500/20 border border-purple-400/30 rounded-lg px-3 py-2">
+                          <span className="text-sm font-medium text-purple-300">Color: {item.color}</span>
                         </div>
                       </div>
 
                       {/* Quantity and Price */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          <span className="text-sm text-gray-600">Quantity:</span>
-                          <div className="flex items-center space-x-2">
+                          <span className="text-sm text-white font-medium">Quantity:</span>
+                          <div className="flex items-center bg-gray-700/50 backdrop-blur-sm rounded-lg border border-gray-600/50">
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
                               onClick={() => handleQuantityUpdate(
                                 item.product.id, 
@@ -193,14 +201,15 @@ export default function CartPage() {
                                 item.quantity - 1
                               )}
                               disabled={item.quantity <= 1}
+                              className="h-10 w-10 hover:bg-red-500/20 hover:text-red-300 text-white"
                             >
-                              <Minus className="h-3 w-3" />
+                              <Minus className="h-4 w-4" />
                             </Button>
-                            <span className="w-12 text-center font-medium">
+                            <span className="w-16 text-center font-bold text-lg text-white">
                               {item.quantity}
                             </span>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
                               onClick={() => handleQuantityUpdate(
                                 item.product.id, 
@@ -209,17 +218,18 @@ export default function CartPage() {
                                 item.quantity + 1
                               )}
                               disabled={item.quantity >= 10}
+                              className="h-10 w-10 hover:bg-green-500/20 hover:text-green-300 text-white"
                             >
-                              <Plus className="h-3 w-3" />
+                              <Plus className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
 
                         <div className="text-right">
-                          <div className="text-lg font-bold">
+                          <div className="text-lg font-bold text-white">
                             {formatPrice(item.totalPrice)}
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-gray-300 font-medium">
                             {formatPrice(item.unitPrice)} each
                           </div>
                         </div>
@@ -280,9 +290,10 @@ export default function CartPage() {
                 )}
 
                 <Link to="/checkout" className="block mt-6">
-                  <Button className="w-full" size="lg">
+                  <Button className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300" size="lg">
+                    <ShoppingBag className="mr-2 h-5 w-5" />
                     Proceed to Checkout
-                    <ArrowLeft className="ml-2 h-4 w-4 rotate-180" />
+                    <ArrowLeft className="ml-2 h-5 w-5 rotate-180" />
                   </Button>
                 </Link>
 

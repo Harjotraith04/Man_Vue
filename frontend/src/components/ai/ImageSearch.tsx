@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -12,12 +12,15 @@ import {
   Eye,
   Palette,
   Tag,
-  Sparkles
+  Sparkles,
+  Zap,
+  Brain
 } from 'lucide-react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { formatPrice } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import { loadModels, analyzeImage } from '@/utils/imageAnalysis'
 
 interface ImageAnalysis {
   items: string[]
@@ -57,12 +60,39 @@ interface ImageSearchProps {
 
 export default function ImageSearch({ onResults, autoNavigate = false, className = '' }: ImageSearchProps) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
+  const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isLoadingModels, setIsLoadingModels] = useState(false)
+  const [modelsLoaded, setModelsLoaded] = useState(false)
   const [results, setResults] = useState<ImageSearchResult | null>(null)
   const [selectedSearchType, setSelectedSearchType] = useState<'similar' | 'color' | 'style'>('similar')
+  const [useMLAnalysis, setUseMLAnalysis] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+
+  // Load ML models on component mount
+  useEffect(() => {
+    const initializeModels = async () => {
+      setIsLoadingModels(true)
+      try {
+        const loaded = await loadModels()
+        setModelsLoaded(loaded)
+        if (loaded) {
+          toast.success('AI models loaded - Fast image analysis ready!')
+        } else {
+          toast.error('AI models failed to load - Using fallback analysis')
+        }
+      } catch (error) {
+        console.error('Model loading error:', error)
+        setModelsLoaded(false)
+      } finally {
+        setIsLoadingModels(false)
+      }
+    }
+
+    initializeModels()
+  }, [])
 
   const searchTypes = [
     { key: 'similar' as const, label: 'Similar Items', icon: Search, description: 'Find products that look similar' },
@@ -88,22 +118,58 @@ export default function ImageSearch({ onResults, autoNavigate = false, className
     reader.onload = (e) => {
       const imageDataUrl = e.target?.result as string
       setUploadedImage(imageDataUrl)
-      performImageSearch(imageDataUrl)
+      
+      // Create image element for ML analysis
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        setImageElement(img)
+        performImageSearch(imageDataUrl, img)
+      }
+      img.src = imageDataUrl
     }
     reader.readAsDataURL(file)
   }
 
-  const performImageSearch = async (imageDataUrl: string) => {
+  const performImageSearch = async (imageDataUrl: string, imgElement?: HTMLImageElement) => {
     setIsProcessing(true)
     setResults(null)
 
     try {
-      const response = await axios.post('/ai/search-image', {
-        imageUrl: imageDataUrl,
-        searchType: selectedSearchType
+      let analysis: ImageAnalysis
+
+      // Use client-side ML analysis if models are loaded and enabled
+      if (useMLAnalysis && modelsLoaded && imgElement) {
+        toast.info('🧠 Analyzing image with AI...')
+        analysis = await analyzeImage(imgElement)
+        toast.success('✨ AI analysis complete!')
+      } else {
+        // Fallback to server-side analysis
+        toast.info('🔍 Analyzing image on server...')
+        const response = await axios.post('/ai/search-image', {
+          imageUrl: imageDataUrl,
+          searchType: selectedSearchType
+        })
+        analysis = response.data.data.analysis
+      }
+
+      // Search for products based on analysis
+      const searchQuery = analysis.search_keywords.join(' ')
+      const productResponse = await axios.get('/products', {
+        params: {
+          search: searchQuery,
+          category: analysis.categories.join(','),
+          limit: 12
+        }
       })
 
-      const searchResults: ImageSearchResult = response.data.data
+      const searchResults: ImageSearchResult = {
+        analysis,
+        products: productResponse.data.data.products || [],
+        searchType: selectedSearchType,
+        totalFound: productResponse.data.data.products?.length || 0
+      }
+
       setResults(searchResults)
       
       if (onResults) {
@@ -143,20 +209,54 @@ export default function ImageSearch({ onResults, autoNavigate = false, className
   const retryWithDifferentType = (newType: 'similar' | 'color' | 'style') => {
     setSelectedSearchType(newType)
     if (uploadedImage) {
-      performImageSearch(uploadedImage)
+      performImageSearch(uploadedImage, imageElement || undefined)
     }
   }
 
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <ImageIcon className="h-5 w-5 mr-2" />
-          Visual Fashion Search
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center">
+            <ImageIcon className="h-5 w-5 mr-2" />
+            Visual Fashion Search
+          </div>
+          <div className="flex items-center space-x-2">
+            {isLoadingModels && (
+              <div className="flex items-center text-xs text-blue-600">
+                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                Loading AI
+              </div>
+            )}
+            {modelsLoaded && (
+              <div className="flex items-center text-xs text-green-600">
+                <Brain className="h-3 w-3 mr-1" />
+                AI Ready
+              </div>
+            )}
+          </div>
         </CardTitle>
-        <p className="text-sm text-gray-600">
-          Upload or take a photo to find similar fashion items
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            Upload or take a photo to find similar fashion items
+          </p>
+          {modelsLoaded && (
+            <div className="flex items-center space-x-2">
+              <label className="flex items-center space-x-1 text-xs">
+                <input
+                  type="checkbox"
+                  checked={useMLAnalysis}
+                  onChange={(e) => setUseMLAnalysis(e.target.checked)}
+                  className="rounded"
+                />
+                <span className="flex items-center">
+                  <Zap className="h-3 w-3 mr-1" />
+                  Fast AI
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
       </CardHeader>
       
       <CardContent className="space-y-6">
@@ -229,8 +329,24 @@ export default function ImageSearch({ onResults, autoNavigate = false, className
             {/* Processing State */}
             {isProcessing && (
               <div className="text-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
-                <p className="text-sm text-gray-600">Analyzing image and finding similar products...</p>
+                <div className="flex items-center justify-center mb-4">
+                  {useMLAnalysis && modelsLoaded ? (
+                    <Brain className="h-8 w-8 animate-pulse text-green-500 mr-2" />
+                  ) : (
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-500 mr-2" />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">
+                      {useMLAnalysis && modelsLoaded ? '🧠 AI Analysis in Progress' : '🔍 Server Analysis in Progress'}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {useMLAnalysis && modelsLoaded 
+                        ? 'Using local machine learning models for fast analysis...'
+                        : 'Analyzing image and finding similar products...'
+                      }
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 

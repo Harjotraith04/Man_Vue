@@ -29,12 +29,14 @@ export default function HomePage() {
     setSelectedProduct(null)
   }
 
-  const handleAddToCart = (product: any, quantity: number) => {
-    addToCart(product._id || product.id, product, quantity.toString(), '')
+  const handleAddToCart = (product: any, quantity: number, size?: string, color?: string) => {
+    const defaultSize = product?.variants?.[0]?.sizes?.[0]?.size || 'S'
+    const defaultColor = product?.variants?.[0]?.color || 'Default'
+    addToCart(product._id || product.id, quantity, size || defaultSize, color || defaultColor)
   }
 
-  const handleAddToWishlist = (product: any) => {
-    addToWishlist(product)
+  const handleAddToWishlist = (productId: string) => {
+    addToWishlist(productId)
   }
 
   const heroCategories = [
@@ -387,12 +389,6 @@ export default function HomePage() {
                     </div>
                     <h3 className="text-3xl font-bold mb-8 text-white holographic">{feature.title}</h3>
                     <p className="text-gray-300 mb-10 text-xl leading-relaxed">{feature.description}</p>
-                    <Link to={feature.href}>
-                      <Button variant="outline" size="lg" className="border-4 border-blue-400 text-blue-400 hover:bg-blue-600 hover:text-white px-10 py-4 rounded-2xl font-bold shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-110 morph-button neon-border">
-                        🚀 Try Now
-                        <ArrowRight className="ml-3 h-6 w-6" />
-                      </Button>
-                    </Link>
                   </CardContent>
                 </Card>
               </div>
