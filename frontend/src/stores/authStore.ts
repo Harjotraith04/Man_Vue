@@ -137,6 +137,10 @@ export const useAuthStore = create<AuthStore>()(
           isLoading: false
         })
         
+        // Clear localStorage to ensure complete logout
+        localStorage.removeItem('auth-storage')
+        localStorage.removeItem('cart-storage')
+        
         toast.success('Logged out successfully')
       },
 

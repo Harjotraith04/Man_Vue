@@ -3,8 +3,6 @@ import { useEffect } from 'react'
 import { useAuthStore } from './stores/authStore'
 import { useCartStore } from './stores/cartStore'
 
-// Simple auth fix component
-import SimpleAuthFix from './components/SimpleAuthFix'
 
 // Layout Components
 import Navbar from './components/layout/Navbar'
@@ -58,8 +56,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col dark relative">
-      {/* Auto-fix authentication */}
-      <SimpleAuthFix />
       
       {/* Optimized Particle Background - Reduced count for performance */}
       <div className="fixed inset-0 pointer-events-none">
