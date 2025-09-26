@@ -195,9 +195,9 @@ router.get('/methods', auth, async (req, res) => {
         currencies: ['gbp', 'usd']
       },
       {
-        id: 'upi',
-        name: 'UPI',
-        description: 'Pay using your UPI ID',
+        id: 'apple-pay',
+        name: 'Apple Pay',
+        description: 'Pay using Apple Pay',
         enabled: true,
         currencies: ['gbp']
       },
@@ -211,7 +211,7 @@ router.get('/methods', auth, async (req, res) => {
       {
         id: 'wallet',
         name: 'Digital Wallet',
-        description: 'Pay using digital wallets like Paytm, PhonePe',
+        description: 'Pay using digital wallets like PayPal, Apple Pay',
         enabled: true,
         currencies: ['gbp']
       },
