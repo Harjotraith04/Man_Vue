@@ -169,12 +169,12 @@ export default function ProductDetailPage() {
               {/* Price */}
               <div className="flex items-center space-x-4 mb-6">
                 <span className="text-4xl font-bold text-green-400">
-                  ₹{product.price?.selling || 0}
+                  {formatPrice(product.price?.selling || 0)}
                 </span>
                 {product.discount?.isActive && (
                   <>
                     <span className="text-2xl text-gray-500 line-through">
-                      ₹{product.price?.original || 0}
+                      {formatPrice(product.price?.original || 0)}
                     </span>
                     <Badge variant="destructive" className="text-lg px-3 py-1">
                       {product.discount.percentage}% OFF
@@ -262,7 +262,7 @@ export default function ProductDetailPage() {
                 <Truck className="h-6 w-6 text-blue-400" />
                 <div>
                   <p className="font-medium text-white">Free Shipping</p>
-                  <p className="text-sm">On orders over ₹500</p>
+                  <p className="text-sm">On orders over £50</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3 text-gray-300">

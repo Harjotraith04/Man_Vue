@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Package, CheckCircle, AlertCircle, Truck, Eye, X, RotateCcw } from 'lucide-react'
+import { Package, CheckCircle, AlertCircle, Truck, Eye, X, RotateCcw, MapPin, Clock, Phone } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
 import axios from 'axios'
@@ -67,6 +67,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [showTrackingModal, setShowTrackingModal] = useState(false)
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -89,6 +90,7 @@ export default function OrdersPage() {
       fetchOrders()
     }
   }, [searchParams, user, filters])
+
 
   const fetchOrders = async () => {
     setIsLoading(true)
@@ -168,6 +170,20 @@ export default function OrdersPage() {
     }
   }
 
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Please Login</h1>
+          <p className="text-gray-600 mb-8">You need to be logged in to view your orders.</p>
+          <Button onClick={() => window.location.href = '/auth'}>
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -191,6 +207,52 @@ export default function OrdersPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
           <p className="text-gray-600 mt-2">Track and manage your orders</p>
+          
+          {/* Quick Stats */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-600">Total Orders</p>
+                  <p className="text-2xl font-bold text-blue-900">{orders.length}</p>
+                </div>
+                <Package className="h-8 w-8 text-blue-600" />
+              </div>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600">Delivered</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {orders.filter(o => o.status === 'delivered').length}
+                  </p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-600">In Transit</p>
+                  <p className="text-2xl font-bold text-yellow-900">
+                    {orders.filter(o => o.status === 'shipped').length}
+                  </p>
+                </div>
+                <Truck className="h-8 w-8 text-yellow-600" />
+              </div>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-600">Processing</p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {orders.filter(o => o.status === 'processing').length}
+                  </p>
+                </div>
+                <AlertCircle className="h-8 w-8 text-purple-600" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {orders.length === 0 ? (
@@ -291,6 +353,18 @@ export default function OrdersPage() {
                               <Eye className="h-3 w-3 mr-1" />
                               View Details
                             </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full"
+                              onClick={() => {
+                                setSelectedOrder(order)
+                                setShowTrackingModal(true)
+                              }}
+                            >
+                              <Truck className="h-3 w-3 mr-1" />
+                              Track Order
+                            </Button>
                             {order.status === 'delivered' && (
                               <Button 
                                 variant="outline" 
@@ -347,6 +421,119 @@ export default function OrdersPage() {
               </div>
             )}
           </>
+        )}
+
+        {/* Tracking Modal */}
+        {showTrackingModal && selectedOrder && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Track Order #{selectedOrder.orderNumber}</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTrackingModal(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Order Summary */}
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-semibold mb-3 text-gray-900">Order Summary</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">Order Date</p>
+                      <p className="font-medium text-gray-900">{new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Total Amount</p>
+                      <p className="font-medium text-gray-900">{formatPrice(selectedOrder.pricing.total)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Items</p>
+                      <p className="font-medium text-gray-900">{selectedOrder.items.length} items</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Status</p>
+                      <Badge variant={getStatusColor(selectedOrder.status)}>
+                        {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Shipping Address */}
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-semibold mb-3 flex items-center text-gray-900">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Shipping Address
+                  </h3>
+                  <div className="text-sm">
+                    <p className="font-medium text-gray-900">{selectedOrder.shippingAddress.name}</p>
+                    <p className="text-gray-600">{selectedOrder.shippingAddress.street}</p>
+                    <p className="text-gray-600">
+                      {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.zipCode}
+                    </p>
+                    <p className="text-gray-600 flex items-center mt-1">
+                      <Phone className="h-3 w-3 mr-1" />
+                      {selectedOrder.shippingAddress.phone}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tracking Timeline */}
+                <div className="mb-6">
+                  <h3 className="font-semibold mb-4 flex items-center text-gray-900">
+                    <Clock className="h-4 w-4 mr-2" />
+                    Tracking Timeline
+                  </h3>
+                  <div className="space-y-4">
+                    {selectedOrder.tracking?.map((track, index) => (
+                      <div key={index} className="flex items-start space-x-3">
+                        <div className={`w-3 h-3 rounded-full mt-2 ${
+                          index === 0 ? 'bg-green-500' : 
+                          index === selectedOrder.tracking!.length - 1 ? 'bg-blue-500' : 
+                          'bg-gray-300'
+                        }`} />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-gray-900">{track.status}</p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(track.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1">{track.message}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Estimated Delivery */}
+                {selectedOrder.status !== 'delivered' && (
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 mb-2">Estimated Delivery</h3>
+                    <p className="text-blue-700">
+                      {selectedOrder.status === 'shipped' 
+                        ? 'Your order is on the way! Expected delivery: 2-3 business days'
+                        : selectedOrder.status === 'processing'
+                        ? 'Your order is being prepared. Expected shipping: 1-2 business days'
+                        : 'Processing your order...'
+                      }
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-end">
+                  <Button onClick={() => setShowTrackingModal(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

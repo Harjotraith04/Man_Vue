@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { CreditCard, MapPin, ArrowLeft, Truck, PoundSterling, Smartphone, CreditCard as CreditCardIcon, Wallet } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import MockPaymentGateway from '@/components/payments/MockPaymentGateway'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
@@ -27,6 +28,8 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cod')
+  const [showMockPayment, setShowMockPayment] = useState(false)
+  const [currentOrder, setCurrentOrder] = useState<any>(null)
   const [shippingAddress, setShippingAddress] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -62,11 +65,33 @@ export default function CheckoutPage() {
   const fetchPaymentMethods = async () => {
     try {
       const response = await axios.get('/payment/methods')
-      setPaymentMethods(response.data.data.paymentMethods)
+      const methods = response.data.data.paymentMethods || []
+      
+      // Also fetch mock payment methods
+      let mockMethods: PaymentMethod[] = []
+      try {
+        const mockResponse = await axios.get('/mock-payment/mock-methods')
+        mockMethods = mockResponse.data.data.methods.map((method: any) => ({
+          id: method.id,
+          name: method.name,
+          description: method.description,
+          enabled: method.enabled,
+          currencies: ['GBP', 'USD']
+        })) || []
+      } catch (error) {
+        console.log('Mock payment methods not available:', error)
+      }
+      
+      setPaymentMethods([
+        ...methods,
+        ...mockMethods,
+        { id: 'cod', name: 'Cash on Delivery', description: 'Pay when your order is delivered', enabled: true, currencies: ['gbp'] }
+      ])
     } catch (error) {
       console.error('Failed to fetch payment methods:', error)
-      // Set fallback payment methods
+      // Set fallback payment methods including mock payment
       setPaymentMethods([
+        { id: 'mock-card', name: 'MockPay Credit/Debit Card', description: 'Secure card payment via MockPay Gateway (Demo)', enabled: true, currencies: ['gbp'] },
         { id: 'cod', name: 'Cash on Delivery', description: 'Pay when your order is delivered', enabled: true, currencies: ['gbp'] },
         { id: 'card', name: 'Credit/Debit Card', description: 'Pay securely with your card', enabled: true, currencies: ['gbp'] }
       ])
@@ -121,7 +146,15 @@ export default function CheckoutPage() {
 
       // If payment method is not COD, handle payment
       if (selectedPaymentMethod !== 'cod') {
-        await handlePayment(order._id, summary.total)
+        if (selectedPaymentMethod === 'mock-card') {
+          // Show MockPaymentGateway for mock card payments
+          setCurrentOrder(order)
+          setShowMockPayment(true)
+          setIsProcessing(false) // Stop processing, let payment gateway handle it
+          return // Don't continue with the success flow yet
+        } else {
+          await handlePayment(order._id, summary.total)
+        }
       }
 
       // Clear cart
@@ -169,11 +202,50 @@ export default function CheckoutPage() {
     }
   }
 
+  const handleMockPaymentSuccess = async (transactionId: string) => {
+    try {
+      if (!currentOrder) return
+      
+      // Confirm the mock payment
+      await axios.post('/mock-payment/confirm-mock-payment', {
+        transactionId,
+        orderId: currentOrder._id
+      })
+
+      // Clear cart
+      await clearCart()
+      
+      toast.success('Payment completed successfully!')
+      navigate(`/orders?success=true&orderNumber=${currentOrder.orderNumber}`)
+    } catch (error: any) {
+      console.error('Mock payment confirmation error:', error)
+      toast.error('Failed to confirm payment')
+    } finally {
+      setShowMockPayment(false)
+      setCurrentOrder(null)
+      setIsProcessing(false)
+    }
+  }
+
+  const handleMockPaymentError = (error: string) => {
+    toast.error(error)
+    setShowMockPayment(false)
+    setIsProcessing(false)
+  }
+
+  const handleMockPaymentCancel = () => {
+    setShowMockPayment(false)
+    setIsProcessing(false)
+    toast.info('Payment cancelled')
+  }
+
   const getPaymentIcon = (methodId: string) => {
     switch (methodId) {
       case 'card':
         return CreditCardIcon
-      case 'upi':
+      case 'mock-card':
+        return CreditCardIcon
+      case 'apple-pay':
         return Smartphone
       case 'cod':
         return PoundSterling
@@ -442,6 +514,17 @@ export default function CheckoutPage() {
           </Card>
         </div>
       </div>
+
+      {/* Mock Payment Gateway Modal */}
+      {showMockPayment && currentOrder && (
+        <MockPaymentGateway
+          amount={summary.total}
+          orderId={currentOrder._id}
+          onSuccess={handleMockPaymentSuccess}
+          onError={handleMockPaymentError}
+          onCancel={handleMockPaymentCancel}
+        />
+      )}
     </div>
   )
 }

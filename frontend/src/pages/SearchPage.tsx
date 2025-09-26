@@ -88,9 +88,9 @@ export default function SearchPage() {
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-GB', {
       style: 'currency',
-      currency: 'INR'
+      currency: 'GBP'
     }).format(price)
   }
 
@@ -170,11 +170,11 @@ export default function SearchPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <div className="text-lg font-bold text-green-400">
-                {formatPrice(product.price?.selling || product.price || 0, '₹')}
+                {formatPrice(product.price?.selling || product.price || 0)}
               </div>
               {product.price?.original && product.price.original > (product.price?.selling || product.price) && (
                 <div className="text-sm text-gray-500 line-through">
-                  {formatPrice(product.price.original, '₹')}
+                  {formatPrice(product.price.original)}
                 </div>
               )}
             </div>

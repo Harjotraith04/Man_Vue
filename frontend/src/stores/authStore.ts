@@ -59,6 +59,7 @@ interface AuthActions {
   setToken: (token: string) => void
   initialize: () => void
   refreshToken: () => Promise<void>
+  fetchCurrentUser: () => Promise<void>
 }
 
 type AuthStore = AuthState & AuthActions
@@ -183,14 +184,43 @@ export const useAuthStore = create<AuthStore>()(
         set({ token, isAuthenticated: true })
       },
 
-      initialize: () => {
+      initialize: async () => {
         const state = get()
         if (state.token) {
           // Set token in axios headers if it exists
           axios.defaults.headers.common['Authorization'] = `Bearer ${state.token}`
           
           console.log('🔐 Initialized auth with token:', state.token.substring(0, 50) + '...')
-          console.log('✅ User authenticated:', state.user?.email)
+          
+          // Fetch current user data if we have a token but no user data
+          if (!state.user) {
+            try {
+              await get().fetchCurrentUser()
+            } catch (error) {
+              console.error('Failed to fetch user data on initialization:', error)
+              // If fetching user fails, clear the token
+              get().logout()
+            }
+          } else {
+            console.log('✅ User authenticated:', state.user?.email)
+          }
+        }
+      },
+
+      fetchCurrentUser: async () => {
+        try {
+          const response = await axios.get('/auth/me')
+          const { user } = response.data.data
+          
+          set({ user, isAuthenticated: true })
+          console.log('✅ Fetched current user:', user.email)
+        } catch (error: any) {
+          console.error('Failed to fetch current user:', error)
+          // If token is invalid, logout
+          if (error.response?.status === 401) {
+            get().logout()
+          }
+          throw error
         }
       },
 

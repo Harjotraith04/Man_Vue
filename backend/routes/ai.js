@@ -239,45 +239,74 @@ router.post('/chat', [
 
         // Search for relevant products using exact database matching
         const searchQuery = message.toLowerCase();
-        const isProductQuery = /\b(shirt|shirts|jean|jeans|shoe|shoes|jacket|jackets|t-shirt|tshirt|accessory|accessories|kurta|kurtas|formal|casual|red|blue|black|white|green|brown|navy|gray|grey|color|colors|price|budget|premium|cheap|expensive|maximum|minimum|max|min|show|give|want|need|looking|find)\b/.test(searchQuery);
+        
+        // Check for follow-up responses (yes, sure, show me, etc.)
+        const isFollowUpResponse = /\b(yes|yeah|yep|sure|okay|ok|show me|display|please|go ahead|proceed|continue)\b/.test(searchQuery);
+        
+        // Extract context from previous conversation to understand what they're saying yes to
+        let contextualQuery = searchQuery;
+        if (isFollowUpResponse && context.length > 0) {
+          // Look at the last few messages to understand context
+          const recentContext = context.slice(-3).map(msg => msg.content.toLowerCase()).join(' ');
+          // If previous context mentioned specific products or categories, use that
+          const productMentions = recentContext.match(/\b(shirt|shirts|jean|jeans|shoe|shoes|jacket|jackets|t-shirt|tshirt|accessory|accessories|kurta|kurtas|formal|casual|red|blue|black|white|green|brown|navy|gray|grey|color|colors|price|budget|premium|cheap|expensive)\b/g);
+          if (productMentions && productMentions.length > 0) {
+            contextualQuery = productMentions.join(' ') + ' ' + searchQuery;
+          }
+        }
+        
+        const isProductQuery = /\b(shirt|shirts|jean|jeans|shoe|shoes|jacket|jackets|t-shirt|tshirt|accessory|accessories|kurta|kurtas|formal|casual|red|blue|black|white|green|brown|navy|gray|grey|color|colors|price|budget|premium|cheap|expensive|maximum|minimum|max|min|show|give|want|need|looking|find)\b/.test(contextualQuery) || isFollowUpResponse;
         
         if (isProductQuery) {
-          // Extract specific search criteria
+          // Extract specific search criteria using contextual query
           const colorKeywords = ['red', 'blue', 'black', 'white', 'green', 'brown', 'navy', 'gray', 'grey'];
           const categoryKeywords = ['shirt', 'shirts', 'jean', 'jeans', 'shoe', 'shoes', 'jacket', 'jackets', 't-shirt', 'tshirt', 'accessory', 'accessories', 'kurta', 'kurtas'];
           
-          const foundColor = colorKeywords.find(color => searchQuery.includes(color));
-          const foundCategory = categoryKeywords.find(cat => searchQuery.includes(cat));
+          const foundColor = colorKeywords.find(color => contextualQuery.includes(color));
+          const foundCategory = categoryKeywords.find(cat => contextualQuery.includes(cat));
           
           // Build exact database query
-          let dbQuery = {};
+          let dbQuery = { isActive: true };
           
-          // Add category filter if found
+          // Add category filter if found - be more inclusive for shirt searches
           if (foundCategory) {
-            if (foundCategory.includes('shirt') || foundCategory.includes('tshirt')) {
-              dbQuery.category = 'shirts';
+            if (foundCategory.includes('tshirt') || foundCategory.includes('t-shirt')) {
+              dbQuery.category = 'tshirts';
+            } else if (foundCategory.includes('shirt')) {
+              // For "shirt" searches, include both shirts and t-shirts since users often mean both
+              dbQuery.category = { $in: ['shirts', 'tshirts'] };
             } else if (foundCategory.includes('jean')) {
               dbQuery.category = 'jeans';
             } else if (foundCategory.includes('shoe')) {
-              dbQuery.category = 'shoes';
+              dbQuery.category = 'formal-shoes';
             } else if (foundCategory.includes('jacket')) {
               dbQuery.category = 'jackets';
             } else if (foundCategory.includes('accessory')) {
               dbQuery.category = 'accessories';
+            } else if (foundCategory.includes('kurta')) {
+              dbQuery.category = 'kurtas';
             }
           }
           
           // Search products from database with exact criteria
           let products = await Product.find(dbQuery)
-            .select('title description category subCategory price.selling primaryImage rating.average brand.name variants tags features')
+            .select('title description shortDescription category subCategory price.selling primaryImage rating.average brand.name variants tags features')
+            .sort({ 'rating.average': -1, isFeatured: -1 })
             .lean();
           
-          // Filter by color if specified
+          // Filter by color if specified - be more flexible with color matching
           if (foundColor) {
             products = products.filter(product => 
-              product.variants && product.variants.some(v => 
-                v.color.toLowerCase().includes(foundColor)
-              )
+              product.variants && product.variants.some(v => {
+                const colorLower = v.color.toLowerCase();
+                // Direct match
+                if (colorLower.includes(foundColor)) return true;
+                // Special cases for blue variants
+                if (foundColor === 'blue' && (colorLower.includes('navy') || colorLower.includes('dark blue') || colorLower.includes('indigo'))) return true;
+                // Special cases for other colors
+                if (foundColor === 'black' && colorLower.includes('dark')) return true;
+                return false;
+              })
             );
           }
           
@@ -288,9 +317,9 @@ router.post('/chat', [
         // Create context-aware prompt with product information
         let productContext = '';
         if (recommendedProducts.length > 0) {
-          // Check if user is asking for specific colors
+          // Check if user is asking for specific colors using contextual query
           const colorKeywords = ['red', 'blue', 'black', 'white', 'green', 'brown', 'navy', 'gray', 'grey'];
-          const foundColor = colorKeywords.find(color => searchQuery.includes(color));
+          const foundColor = colorKeywords.find(color => contextualQuery.includes(color));
           
           if (foundColor) {
             const productsWithColor = recommendedProducts.filter(product => 
@@ -299,19 +328,37 @@ router.post('/chat', [
             
             if (productsWithColor.length > 0) {
               productContext = `
-Available ${foundColor} products in our store:
+Available ${foundColor} products that match your request:
 ${productsWithColor.map((product, index) => {
                 const colorVariants = product.variants.filter(v => v.color.toLowerCase().includes(foundColor));
-                return `${index + 1}. ${product.title} - ${product.category} - £${product.price.selling} - Available in: ${colorVariants.map(v => v.color).join(', ')}`;
-              }).join('\n')}
+                const shortDesc = product.shortDescription || (product.description ? product.description.substring(0, 100) + '...' : '');
+                return `${index + 1}. ${product.title}
+   Description: ${shortDesc}
+   Price: £${product.price.selling}
+   Category: ${product.category}
+   Available in: ${colorVariants.map(v => v.color).join(', ')}
+   Features: ${product.features ? product.features.slice(0, 3).join(', ') : 'Quality construction'}`;
+              }).join('\n\n')}
+
+${isFollowUpResponse ? `Note: User responded with "${message}" - they want to see these ${foundColor} products. Present them enthusiastically with detailed information.` : ''}
 `;
             }
           } else {
             productContext = `
-Available products in our store:
-${recommendedProducts.map((product, index) => 
-  `${index + 1}. ${product.title} - ${product.category} - £${product.price.selling} - ${product.brand.name}`
-).join('\n')}
+Available products that match your request:
+${recommendedProducts.map((product, index) => {
+  const shortDesc = product.shortDescription || (product.description ? product.description.substring(0, 100) + '...' : '');
+  const colors = product.variants && product.variants.length > 0 ? product.variants.map(v => v.color).join(', ') : 'Multiple colors';
+  return `${index + 1}. ${product.title}
+   Description: ${shortDesc}
+   Price: £${product.price.selling}
+   Category: ${product.category}
+   Brand: ${product.brand.name}
+   Available colors: ${colors}
+   Features: ${product.features ? product.features.slice(0, 3).join(', ') : 'Quality construction'}`;
+}).join('\n\n')}
+
+${isFollowUpResponse ? `Note: User responded with "${message}" - they want to see these products. Present them enthusiastically with detailed information.` : ''}
 `;
           }
         }
@@ -343,6 +390,8 @@ Guidelines:
 - Use the emotional and lifestyle context from product descriptions to connect with customers
 - Be specific about care instructions when relevant
 - Keep responses under 250 words unless detailed styling advice is requested
+- IMPORTANT: If the user responds with "yes", "sure", "show me", or similar follow-up responses, present the available products immediately with enthusiasm and detail - don't ask generic questions
+- When presenting products, always show them with specific details about colors, materials, and styling from their descriptions
 
 IMPORTANT: Use the detailed product information provided to give rich, specific answers. Don't give generic advice - use the actual product details about colors, materials, fit, and styling from our inventory.
 
@@ -359,16 +408,19 @@ Respond as Manvue's fashion assistant with specific product knowledge:
 `;
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
+        console.log('🤖 Using Gemini AI with enhanced context:', productContext ? 'YES' : 'NO');
         const result = await model.generateContent(systemPrompt);
         const response = await result.response;
         botMessage = response.text();
+        console.log('🤖 Gemini response received, length:', botMessage.length);
       } else {
+        console.log('⚠️  No Gemini API key, using rule-based responses');
         // Fallback to rule-based responses
-        botMessage = generateRuleBasedResponse(message, req.user);
+        botMessage = generateRuleBasedResponse(message, req.user, recommendedProducts, context);
       }
     } catch (aiError) {
-      console.warn('Gemini AI error, using fallback:', aiError.message);
-      botMessage = generateRuleBasedResponse(message, req.user);
+      console.warn('❌ Gemini AI error, using fallback:', aiError.message);
+      botMessage = generateRuleBasedResponse(message, req.user, recommendedProducts, context);
     }
 
     res.json({
@@ -797,8 +849,53 @@ Format as JSON:
 });
 
 // Intelligent rule-based response generator for fallback
-function generateRuleBasedResponse(message, user) {
+function generateRuleBasedResponse(message, user, recommendedProducts = [], context = []) {
   const messageLower = message.toLowerCase();
+  
+  // Handle follow-up responses (yes, sure, show me, etc.)
+  const isFollowUpResponse = /\b(yes|yeah|yep|sure|okay|ok|show me|display|please|go ahead|proceed|continue)\b/.test(messageLower);
+  
+  if (isFollowUpResponse && recommendedProducts && recommendedProducts.length > 0) {
+    const productList = recommendedProducts.map((product, index) => {
+      const colors = product.variants && product.variants.length > 0 ? product.variants.map(v => v.color).join(', ') : 'Multiple colors';
+      const shortDesc = product.shortDescription || (product.description ? product.description.substring(0, 100) + '...' : 'Quality item');
+      return `${index + 1}. **${product.title}** - £${product.price?.selling}
+   ${shortDesc}
+   Colors: ${colors}
+   Category: ${product.category}`;
+    }).join('\n\n');
+    
+    return `Great choice! Here are the perfect options for you:
+
+${productList}
+
+Each of these items is carefully selected for quality and style. ${recommendedProducts.length > 1 ? 'Which one catches your eye?' : 'This would be perfect for your wardrobe!'} I can provide more details about materials, sizing, or styling tips for any of these items.`;
+  }
+  
+  // Handle color + category queries from context
+  if (context.length > 0) {
+    const recentContext = context.slice(-2).map(msg => msg.content?.toLowerCase() || '').join(' ');
+    const colorMentions = recentContext.match(/\b(blue|red|black|white|green|brown|navy|gray|grey)\b/g);
+    const categoryMentions = recentContext.match(/\b(shirt|shirts|jean|jeans|shoe|shoes|jacket|jackets|t-shirt|tshirt)\b/g);
+    
+    if (isFollowUpResponse && colorMentions && categoryMentions) {
+      const color = colorMentions[colorMentions.length - 1];
+      const category = categoryMentions[categoryMentions.length - 1];
+      
+      if (recommendedProducts && recommendedProducts.length > 0) {
+        const productList = recommendedProducts.map((product, index) => {
+          const colors = product.variants && product.variants.length > 0 ? product.variants.map(v => v.color).join(', ') : 'Multiple colors';
+          return `${index + 1}. ${product.title} - £${product.price?.selling} (Available in: ${colors})`;
+        }).join('\n');
+        
+        return `Absolutely! Here are our ${color} ${category} options:
+
+${productList}
+
+${color.charAt(0).toUpperCase() + color.slice(1)} is such a versatile color that works for many occasions. Would you like to know more about any of these items?`;
+      }
+    }
+  }
   
   // Normalize common typos and variations
   const normalizedMessage = messageLower

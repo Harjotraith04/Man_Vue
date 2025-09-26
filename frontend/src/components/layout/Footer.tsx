@@ -224,11 +224,13 @@ export default function Footer() {
               <span>•</span>
               <span>Mastercard</span>
               <span>•</span>
-              <span>UPI</span>
+              <span>American Express</span>
               <span>•</span>
-              <span>Razorpay</span>
+              <span>PayPal</span>
               <span>•</span>
-              <span>COD</span>
+              <span>Apple Pay</span>
+              <span>•</span>
+              <span>Google Pay</span>
             </div>
           </div>
         </div>

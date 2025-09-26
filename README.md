@@ -1,247 +1,186 @@
-# 🔥 ManVue – Full-Stack Men's Fashion E-Commerce Platform
+# 🛍️ ManVue - Men's Fashion E-Commerce Platform
 
-A production-ready, full-stack men's fashion e-commerce platform with AI-powered features, AR/VR capabilities, and modern web technologies.
+A full-stack men's fashion e-commerce website built with React, Node.js, and MongoDB, featuring AI-powered search, AR/VR experiences, and comprehensive admin management.
 
-## ✨ Features
+## 🌟 Features
 
-### 🛍️ E-Commerce Core
-- **Product Catalog**: Complete men's fashion categories (shirts, jeans, ethnic wear, shoes, accessories)
-- **Smart Search**: AI-powered search with filters, sorting, and recommendations
-- **Shopping Cart**: Advanced cart management with persistent state
-- **Checkout**: Secure checkout process with multiple payment options
-- **Order Management**: Complete order tracking and management system
-- **User Profiles**: Comprehensive user management with preferences
+### 🛒 E-Commerce Core
+- **Product Catalog**: Browse men's fashion items across multiple categories
+- **Shopping Cart & Wishlist**: Add items to cart and save favorites
+- **User Authentication**: Secure login/register with Google OAuth
+- **Order Management**: Complete order tracking and history
+- **Payment Integration**: Stripe payment gateway integration
 
 ### 🤖 AI-Powered Features
-- **Fashion Chatbot**: AI advisor powered by Google Gemini for style recommendations
-- **Voice Shopping**: Voice-activated product search and recommendations
-- **Image Search**: Upload photos to find similar fashion items
-- **Style Recommendations**: Personalized suggestions based on user preferences
+- **AI Chatbot**: Intelligent product recommendations and customer support
+- **Image Search**: Upload images to find similar products
+- **Voice Search**: Voice-activated product search
+- **Web Scanner**: Scan fashion websites for product inspiration
 
-### 🥽 AR/VR Experience
-- **AR Product Preview**: 3D model try-on using model-viewer
-- **VR Gallery**: Immersive virtual fashion showroom
-- **360° Product Views**: Interactive product visualization
+### 🎨 Advanced UI/UX
+- **AR Preview**: Augmented reality product visualization
+- **VR Gallery**: Virtual reality shopping experience
+- **Responsive Design**: Mobile-first responsive interface
+- **Modern UI**: Built with Tailwind CSS and Radix UI components
 
-### 👑 Admin Dashboard
-- **Analytics**: Comprehensive sales and user analytics
-- **Product Management**: Full CRUD operations for products
-- **User Management**: User roles and permissions
-- **Order Processing**: Order status management and tracking
+### 👨‍💼 Admin Dashboard
+- **Product Management**: Add, edit, and manage products
+- **Order Management**: Track and manage customer orders
+- **User Management**: Admin user management system
+- **Analytics**: Sales and performance analytics
+- **Dataset Import**: Import products from Kaggle datasets
 
-### 🔐 Authentication & Security
-- **Multi-Auth**: Local authentication + Google OAuth
-- **JWT Tokens**: Secure authentication with refresh tokens
-- **Role-Based Access**: User and admin role management
-- **Security**: Helmet, rate limiting, and input validation
-
-## 🛠️ Tech Stack
+## 🏗️ Tech Stack
 
 ### Frontend
 - **React 18** with TypeScript
 - **Vite** for fast development and building
 - **Tailwind CSS** for styling
-- **Shadcn/UI** for component library
-- **Zustand** for state management
-- **React Router** for navigation
-- **React Query** for server state
+- **Radix UI** for accessible components
 - **Framer Motion** for animations
-- **Three.js** for 3D/AR features
+- **Three.js** for 3D/AR/VR experiences
+- **TensorFlow.js** for AI features
 
 ### Backend
 - **Node.js** with Express.js
 - **MongoDB** with Mongoose ODM
-- **JWT** authentication
-- **Passport.js** for OAuth
-- **Cloudinary** for image storage
-- **Google Gemini AI** for chatbot and recommendations
-- **Redis** for caching (optional)
+- **JWT** for authentication
+- **Passport.js** for OAuth strategies
+- **Cloudinary** for image management
+- **Stripe** for payments
+- **Google Gemini AI** for AI features
 
-### DevOps & Deployment
-- **Docker** & Docker Compose
+### DevOps
+- **Docker** containerization
+- **Docker Compose** for multi-container setup
 - **Nginx** reverse proxy
-- **ESLint** & Prettier
-- **GitHub Actions** ready
-- **Production optimized**
+- **Redis** for caching (optional)
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
-- Docker and Docker Compose
-- MongoDB (or use Docker)
-- Git
+- **Node.js** (v18 or higher)
+- **MongoDB** (local or cloud)
+- **Python 3.7+** (for Kaggle dataset import)
+- **Docker** (optional, for containerized setup)
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/manvue.git
-cd manvue
+git clone <repository-url>
+cd ManVue
 ```
 
-### 2. Environment Setup
+### 2. Install Dependencies
+```bash
+# Install all dependencies (root, backend, and frontend)
+npm run install:all
+
+# Or install individually
+npm install
+cd backend && npm install
+cd ../frontend && npm install
+```
+
+### 3. Environment Setup
 
 #### Backend Environment
 ```bash
-cp backend/env.example backend/.env
+cd backend
+cp env.example .env
 ```
 
-Edit `backend/.env` with your configuration:
+Edit `.env` with your configuration:
 ```env
-# Server Configuration
 PORT=4000
 NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-
-# Database
 MONGODB_URI=mongodb://localhost:27017/manvue
-
-# JWT Secret (generate a strong secret)
 JWT_SECRET=your-super-secret-jwt-key
-
-# Google OAuth (get from Google Cloud Console)
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# Cloudinary (get from Cloudinary dashboard)
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
-
-# Google Gemini AI (get from Google AI Studio)
+CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 GEMINI_API_KEY=your-gemini-api-key
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 #### Frontend Environment
 ```bash
-cp frontend/.env.example frontend/.env
+cd frontend
+cp .env.template .env
 ```
 
-Edit `frontend/.env`:
+Edit `.env` with your configuration:
 ```env
 VITE_API_URL=http://localhost:4000/api
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
+VITE_CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
 ```
 
-### 3. Run with Docker (Recommended)
+### 4. Start the Application
 
+#### Development Mode
 ```bash
-# Install root dependencies
-npm install
-
-# Start all services
-npm run docker:up
-
-# The application will be available at:
-# Frontend: http://localhost:5173
-# Backend API: http://localhost:4000
-# MongoDB: localhost:27017
-```
-
-### 4. Or Run Locally
-
-#### Install Dependencies
-```bash
-npm run install:all
-```
-
-#### Start Development Servers
-```bash
-# Start backend and frontend concurrently
+# Start both backend and frontend concurrently
 npm run dev
 
-# Or start individually:
-npm run dev:backend
-npm run dev:frontend
+# Or start individually
+npm run dev:backend  # Backend on http://localhost:4000
+npm run dev:frontend # Frontend on http://localhost:5173
 ```
 
-### 5. Seed Sample Data
+#### Docker Mode
+```bash
+# Start all services with Docker Compose
+npm run docker:up
+
+# Stop all services
+npm run docker:down
+```
+
+### 5. Create Admin User
+```bash
+cd backend
+npm run create-admin
+```
+
+### 6. Import Sample Data (Optional)
 ```bash
 cd backend
 npm run seed
 ```
 
-This creates:
-- Admin user: `admin@manvue.com` (password: `admin123`)
-- Test user: `john@example.com` (password: `password123`)
-- Sample products across all categories
+## 📊 Dataset Import
 
-## 📖 API Documentation
+### Kaggle Dataset Setup
+1. **Install Python dependencies**:
+   ```bash
+   pip install kaggle
+   ```
 
-### Authentication Endpoints
-```
-POST /api/auth/register          # User registration
-POST /api/auth/login             # User login
-GET  /api/auth/google            # Google OAuth
-GET  /api/auth/me                # Get current user
-PUT  /api/auth/profile           # Update profile
-POST /api/auth/logout            # Logout
-```
+2. **Set up Kaggle credentials**:
+   - Get API key from [Kaggle Account Settings](https://www.kaggle.com/account)
+   - Add to backend `.env`:
+     ```env
+     KAGGLE_USERNAME=your_kaggle_username
+     KAGGLE_KEY=your_kaggle_api_key
+     ```
 
-### Product Endpoints
-```
-GET    /api/products             # Get products with filters
-GET    /api/products/:slug       # Get single product
-POST   /api/products             # Create product (admin)
-PUT    /api/products/:id         # Update product (admin)
-DELETE /api/products/:id         # Delete product (admin)
-POST   /api/products/:id/wishlist # Toggle wishlist
-POST   /api/products/:id/reviews  # Add review
-```
+3. **Import dataset**:
+   ```bash
+   cd backend
+   npm run import-kaggle
+   ```
 
-### AI Endpoints
-```
-POST /api/ai/chat                # Fashion chatbot
-POST /api/ai/voice-recommend     # Voice recommendations
-POST /api/ai/search-image        # Image-based search
-POST /api/ai/style-advice        # Style advisor
-```
+### Manual Dataset Import
+1. Place images in `backend/Kaggle_Data/Kaggle_Data/` folder
+2. Organize by categories (Accessories, Ethnic, Formal, Jeans, Shirts, Shoes, T-Shirts)
+3. Run import script: `npm run import-kaggle`
 
-### Cart & Orders
-```
-GET    /api/users/cart           # Get user cart
-POST   /api/users/cart           # Add to cart
-PUT    /api/users/cart/:id       # Update cart item
-DELETE /api/users/cart/:id       # Remove from cart
+## 🐳 Docker Setup
 
-POST   /api/orders               # Create order
-GET    /api/orders/:orderNumber  # Get order details
-PUT    /api/orders/:orderNumber/cancel # Cancel order
-```
-
-## 🏗️ Project Structure
-
-```
-manvue/
-├── backend/
-│   ├── config/           # Configuration files
-│   ├── models/           # MongoDB models
-│   ├── routes/           # API routes
-│   ├── middleware/       # Custom middleware
-│   ├── scripts/          # Utility scripts
-│   └── server.js         # Entry point
-├── frontend/
-│   ├── src/
-│   │   ├── components/   # React components
-│   │   ├── pages/        # Page components
-│   │   ├── stores/       # Zustand stores
-│   │   ├── lib/          # Utilities
-│   │   └── App.tsx       # Main app component
-│   ├── public/           # Static assets
-│   └── index.html        # HTML template
-├── docker-compose.yml    # Docker services
-├── nginx.conf           # Nginx configuration
-└── README.md           # This file
-```
-
-## 🐳 Docker Services
-
-The application runs with the following services:
-
-- **frontend**: React app (port 5173)
-- **backend**: Node.js API (port 4000)
-- **mongodb**: Database (port 27017)
-- **redis**: Caching (port 6379)
-- **nginx**: Reverse proxy (port 80)
-
+### Using Docker Compose
 ```bash
 # Start all services
 docker-compose up -d
@@ -249,191 +188,165 @@ docker-compose up -d
 # View logs
 docker-compose logs -f
 
-# Stop all services
+# Stop services
 docker-compose down
-
-# Rebuild and restart
-docker-compose up --build -d
 ```
 
-## 🎨 Key Features Guide
+### Services Included
+- **MongoDB**: Database service
+- **Redis**: Caching service (optional)
+- **Backend**: API server
+- **Frontend**: React application
+- **Nginx**: Reverse proxy (optional)
 
-### AI Fashion Advisor
-The AI chatbot provides personalized fashion advice:
-- Style recommendations based on occasion
-- Color coordination suggestions
-- Size and fit guidance
-- Trend insights
+## 📁 Project Structure
 
-### Voice Shopping
-Voice-activated shopping experience:
-- "Show me casual shirts under £20"
-- "Find blue jeans in size 32"
-- Natural language product search
+```
+ManVue/
+├── backend/                 # Node.js API server
+│   ├── config/             # Configuration files
+│   ├── middleware/          # Express middleware
+│   ├── models/             # MongoDB models
+│   ├── routes/             # API routes
+│   ├── scripts/            # Utility scripts
+│   ├── Kaggle_Data/        # Dataset images
+│   └── server.js           # Main server file
+├── frontend/               # React application
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   ├── pages/          # Page components
+│   │   ├── stores/         # State management
+│   │   └── utils/          # Utility functions
+│   └── public/             # Static assets
+├── scripts/                # Root-level scripts
+├── docker-compose.yml      # Docker configuration
+└── nginx.conf              # Nginx configuration
+```
 
-### Image-Based Search
-Upload fashion images to find similar products:
-- Advanced computer vision
-- Style and color matching
-- Brand and category detection
+## 🔧 Available Scripts
 
-### AR Product Preview
-3D model visualization:
-- 360° product rotation
-- Zoom and inspect details
-- Scale to real-world size
-
-### VR Fashion Gallery
-Immersive shopping experience:
-- Virtual showroom navigation
-- Interactive product displays
-- WebXR compatibility
-
-## 🔧 Configuration
-
-### Google OAuth Setup
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URIs:
-   - `http://localhost:4000/api/auth/google/callback`
-   - Your production domain callback
-
-### Cloudinary Setup
-1. Sign up at [Cloudinary](https://cloudinary.com/)
-2. Get your cloud name, API key, and secret
-3. Add to environment variables
-
-### Google Gemini AI Setup
-1. Visit [Google AI Studio](https://makersuite.google.com/)
-2. Create an API key
-3. Add to environment variables
-
-## 🚦 Development
-
-### Code Quality
+### Root Level
 ```bash
-# Lint code
-npm run lint
-
-# Format code
-npm run format
-
-# Type check
-npm run type-check
+npm run dev              # Start both backend and frontend
+npm run dev:backend      # Start backend only
+npm run dev:frontend     # Start frontend only
+npm run build            # Build frontend for production
+npm run install:all      # Install all dependencies
+npm run docker:up        # Start with Docker Compose
+npm run docker:down      # Stop Docker Compose
 ```
 
-### Testing
+### Backend Scripts
 ```bash
-# Run tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
+npm start                # Start production server
+npm run dev              # Start development server
+npm run seed             # Seed database with sample data
+npm run create-admin     # Create admin user
+npm run import-kaggle    # Import Kaggle dataset
+npm run fix-products     # Fix product visibility
 ```
 
-### Building for Production
+### Frontend Scripts
 ```bash
-# Build frontend
-npm run build
-
-# Start production server
-npm start
+npm run dev              # Start development server
+npm run build            # Build for production
+npm run preview          # Preview production build
+npm run lint             # Run ESLint
 ```
 
-## 📈 Performance
+## 🌐 API Endpoints
 
-### Frontend Optimizations
-- Code splitting and lazy loading
-- Image optimization with Cloudinary
-- Caching strategies
-- Bundle size optimization
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/auth/google` - Google OAuth
+- `POST /api/auth/logout` - User logout
 
-### Backend Optimizations
-- Database indexing
-- Query optimization
-- Redis caching
-- Rate limiting
-- Compression
+### Products
+- `GET /api/products` - Get all products
+- `GET /api/products/:slug` - Get product by slug
+- `GET /api/products/categories/list` - Get categories
+- `POST /api/admin/products` - Create product (admin)
+- `PUT /api/admin/products/:id` - Update product (admin)
+- `DELETE /api/admin/products/:id` - Delete product (admin)
 
-### SEO & Accessibility
-- Server-side rendering ready
-- Meta tags optimization
-- Semantic HTML
-- ARIA labels
-- Keyboard navigation
+### Orders
+- `GET /api/orders` - Get user orders
+- `POST /api/orders` - Create order
+- `GET /api/admin/orders` - Get all orders (admin)
 
-## 🔒 Security
+### AI Features
+- `POST /api/ai/chat` - AI chatbot
+- `POST /api/ai/image-search` - Image search
+- `POST /api/ai/voice-search` - Voice search
+- `POST /api/ai/web-scanner` - Web scanner
 
-### Implemented Security Measures
-- JWT token authentication
-- Password hashing with bcrypt
-- Input validation and sanitization
-- Rate limiting on API endpoints
-- CORS configuration
-- Helmet.js security headers
-- XSS protection
-- SQL injection prevention
+## 🔐 Environment Variables
+
+### Required Backend Variables
+- `MONGODB_URI` - MongoDB connection string
+- `JWT_SECRET` - JWT signing secret
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+- `CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name
+- `CLOUDINARY_API_KEY` - Cloudinary API key
+- `CLOUDINARY_API_SECRET` - Cloudinary API secret
+- `GEMINI_API_KEY` - Google Gemini AI API key
+- `STRIPE_SECRET_KEY` - Stripe secret key
+- `STRIPE_PUBLISHABLE_KEY` - Stripe publishable key
+
+### Required Frontend Variables
+- `VITE_API_URL` - Backend API URL
+- `VITE_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key
+- `VITE_CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name
 
 ## 🚀 Deployment
 
-### Production Deployment
-1. **Environment Setup**: Configure production environment variables
-2. **Database**: Set up MongoDB Atlas or self-hosted MongoDB
-3. **File Storage**: Configure Cloudinary for image storage
-4. **SSL**: Set up SSL certificates for HTTPS
-5. **CDN**: Configure CDN for static assets
-6. **Monitoring**: Set up logging and monitoring
+### Production Build
+```bash
+# Build frontend
+cd frontend
+npm run build
 
-### Deployment Platforms
-- **Frontend**: Vercel, Netlify, or AWS S3
-- **Backend**: Heroku, Railway, DigitalOcean, or AWS
-- **Database**: MongoDB Atlas, AWS DocumentDB
-- **Full Stack**: Docker on VPS, AWS ECS, or Kubernetes
+# Start backend in production
+cd backend
+npm start
+```
 
-### CI/CD Pipeline
-GitHub Actions workflow included for:
-- Automated testing
-- Code quality checks
-- Build and deployment
-- Security scanning
+### Docker Production
+```bash
+# Build and start with Docker Compose
+docker-compose -f docker-compose.prod.yml up -d
+```
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow TypeScript best practices
-- Write meaningful commit messages
-- Add tests for new features
-- Update documentation
-- Follow the existing code style
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit changes: `git commit -m 'Add feature'`
+4. Push to branch: `git push origin feature-name`
+5. Submit a pull request
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 Author
+## 🆘 Support
 
-Created with ❤️ by the ManVue Team
+For support and questions:
+- Create an issue in the repository
+- Check the documentation in each component folder
+- Review the existing setup guides
 
-## 🙏 Acknowledgments
+## 🎯 Roadmap
 
-- [Unsplash](https://unsplash.com/) for sample images
-- [Lucide](https://lucide.dev/) for icons
-- [Tailwind CSS](https://tailwindcss.com/) for styling
-- [Shadcn/UI](https://ui.shadcn.com/) for components
-- [Google Gemini](https://ai.google.dev/) for AI features
-
-## 📞 Support
-
-For support, email support@manvue.com or create an issue on GitHub.
+- [ ] Mobile app development
+- [ ] Advanced AI recommendations
+- [ ] Multi-language support
+- [ ] Advanced analytics dashboard
+- [ ] Social media integration
+- [ ] Subscription service
 
 ---
 
-**Happy Shopping! 🛍️**
+**Built with ❤️ by the ManVue Team**

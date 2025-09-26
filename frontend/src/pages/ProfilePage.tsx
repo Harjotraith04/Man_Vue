@@ -62,7 +62,7 @@ export default function ProfilePage() {
           city: userProfile.address?.city || '',
           state: userProfile.address?.state || '',
           zipCode: userProfile.address?.zipCode || '',
-          country: userProfile.address?.country || 'UK'
+          country: userProfile.address?.country || 'United Kingdom'
         }
       })
 
@@ -78,20 +78,7 @@ export default function ProfilePage() {
       })
     } catch (error) {
       console.error('Failed to fetch profile:', error)
-      // Fallback to user data from auth store
-      if (user) {
-        setProfileForm({
-          name: user.name || '',
-          phone: user.phone || '',
-          address: {
-            street: user.address?.street || '',
-            city: user.address?.city || '',
-            state: user.address?.state || '',
-            zipCode: user.address?.zipCode || '',
-            country: user.address?.country || 'UK'
-          }
-        })
-      }
+      toast.error('Failed to load profile data')
     }
   }
 
@@ -158,7 +145,17 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return <div>Loading...</div>
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Please Login</h1>
+          <p className="text-gray-600 mb-8">You need to be logged in to view your profile.</p>
+          <Button onClick={() => window.location.href = '/auth'}>
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -170,27 +167,37 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Header */}
-        <Card className="mb-8">
+        <Card className="mb-8 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
           <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+            <div className="flex items-center space-x-6">
+              <div className="w-24 h-24 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
                 {user.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-full object-cover" />
+                  <img src={user.avatar} alt={user.name} className="w-24 h-24 rounded-full object-cover" />
                 ) : (
-                  <User className="h-10 w-10 text-white" />
+                  <User className="h-12 w-12 text-white" />
                 )}
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
-                <p className="text-gray-600">{user.email}</p>
-                <div className="flex items-center space-x-2 mt-2">
-                  <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+              <div className="flex-1">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">{user.name}</h2>
+                <p className="text-gray-600 text-lg mb-3">{user.email}</p>
+                <div className="flex items-center space-x-3">
+                  <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="px-3 py-1">
                     {user.role === 'admin' ? 'Admin' : 'Customer'}
                   </Badge>
-                  <Badge variant={user.isActive ? 'default' : 'destructive'}>
+                  <Badge variant={user.isActive ? 'default' : 'destructive'} className="px-3 py-1">
                     {user.isActive ? 'Active' : 'Inactive'}
                   </Badge>
+                  {user.createdAt && (
+                    <Badge variant="outline" className="px-3 py-1">
+                      Member since {new Date(user.createdAt).toLocaleDateString()}
+                    </Badge>
+                  )}
                 </div>
+                {user.lastLogin && (
+                  <div className="mt-3 text-sm text-gray-500">
+                    Last login: {new Date(user.lastLogin).toLocaleString()}
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -301,58 +308,80 @@ export default function ProfilePage() {
           </TabsContent>
 
           <TabsContent value="preferences" className="space-y-6">
-            <Card>
+            <Card className="bg-gray-900 border-gray-700">
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-white">
                   <Settings className="mr-2 h-5 w-5" />
                   Shopping Preferences
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-8">
+                {/* Favorite Categories */}
+                <div>
+                  <h4 className="font-semibold text-lg mb-4 text-white">Favorite Categories</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {preferences.favoriteCategories.map((category, index) => (
+                      <Badge key={index} variant="secondary" className="px-3 py-1 bg-gray-700 text-gray-200">
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-300 mt-2">
+                    These categories help us personalize your shopping experience
+                  </p>
+                </div>
+
                 {/* Notifications */}
                 <div>
-                  <h4 className="font-medium mb-3">Notifications</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
+                  <h4 className="font-semibold text-lg mb-4 text-white">Notifications</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700">
+                      <div>
+                        <label htmlFor="newsletter" className="font-medium text-white">
+                          Email newsletter and promotions
+                        </label>
+                        <p className="text-sm text-gray-300">Get updates about new products and special offers</p>
+                      </div>
                       <input
                         type="checkbox"
                         id="newsletter"
                         checked={preferences.newsletter}
                         onChange={(e) => setPreferences(prev => ({ ...prev, newsletter: e.target.checked }))}
-                        className="rounded"
+                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 bg-gray-700 border-gray-600"
                       />
-                      <label htmlFor="newsletter" className="text-sm">
-                        Email newsletter and promotions
-                      </label>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700">
+                      <div>
+                        <label htmlFor="notifications" className="font-medium text-white">
+                          Order updates and notifications
+                        </label>
+                        <p className="text-sm text-gray-300">Receive real-time updates about your orders</p>
+                      </div>
                       <input
                         type="checkbox"
                         id="notifications"
                         checked={preferences.notifications}
                         onChange={(e) => setPreferences(prev => ({ ...prev, notifications: e.target.checked }))}
-                        className="rounded"
+                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 bg-gray-700 border-gray-600"
                       />
-                      <label htmlFor="notifications" className="text-sm">
-                        Order updates and notifications
-                      </label>
                     </div>
                   </div>
                 </div>
 
                 {/* Size Preferences */}
                 <div>
-                  <h4 className="font-medium mb-3">Size Preferences</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Shirt Size</label>
+                  <h4 className="font-semibold text-lg mb-4 text-white">Size Preferences</h4>
+                  <p className="text-sm text-gray-300 mb-4">Set your preferred sizes for faster checkout</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="p-4 border border-gray-700 rounded-lg bg-gray-800">
+                      <label className="block text-sm font-medium mb-3 text-white">Shirt Size</label>
                       <select
                         value={preferences.sizePreferences.shirt}
                         onChange={(e) => setPreferences(prev => ({
                           ...prev,
                           sizePreferences: { ...prev.sizePreferences, shirt: e.target.value }
                         }))}
-                        className="w-full p-2 border rounded-md"
+                        className="w-full p-3 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white"
                       >
                         <option value="">Select Size</option>
                         <option value="XS">XS</option>
@@ -363,15 +392,15 @@ export default function ProfilePage() {
                         <option value="XXL">XXL</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Pants Size</label>
+                    <div className="p-4 border border-gray-700 rounded-lg bg-gray-800">
+                      <label className="block text-sm font-medium mb-3 text-white">Pants Size</label>
                       <select
                         value={preferences.sizePreferences.pants}
                         onChange={(e) => setPreferences(prev => ({
                           ...prev,
                           sizePreferences: { ...prev.sizePreferences, pants: e.target.value }
                         }))}
-                        className="w-full p-2 border rounded-md"
+                        className="w-full p-3 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white"
                       >
                         <option value="">Select Size</option>
                         <option value="28">28</option>
@@ -383,15 +412,15 @@ export default function ProfilePage() {
                         <option value="40">40</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Shoe Size</label>
+                    <div className="p-4 border border-gray-700 rounded-lg bg-gray-800">
+                      <label className="block text-sm font-medium mb-3 text-white">Shoe Size</label>
                       <select
                         value={preferences.sizePreferences.shoes}
                         onChange={(e) => setPreferences(prev => ({
                           ...prev,
                           sizePreferences: { ...prev.sizePreferences, shoes: e.target.value }
                         }))}
-                        className="w-full p-2 border rounded-md"
+                        className="w-full p-3 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-700 text-white"
                       >
                         <option value="">Select Size</option>
                         <option value="7">7</option>
@@ -405,9 +434,11 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <Button onClick={handlePreferencesUpdate} disabled={isLoading}>
-                  {isLoading ? 'Updating...' : 'Save Preferences'}
-                </Button>
+                <div className="pt-4 border-t border-gray-700">
+                  <Button onClick={handlePreferencesUpdate} disabled={isLoading} size="lg" className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white">
+                    {isLoading ? 'Updating...' : 'Save Preferences'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -458,36 +489,22 @@ export default function ProfilePage() {
           </TabsContent>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Package className="mr-2 h-5 w-5" />
-                    Recent Orders
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-4">View your recent orders and their status</p>
-                  <Button onClick={() => window.location.href = '/orders'}>
-                    View All Orders
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Heart className="mr-2 h-5 w-5" />
-                    Wishlist
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-4">Manage your saved items</p>
-                  <Button onClick={() => window.location.href = '/wishlist'}>
-                    View Wishlist
-                  </Button>
-                </CardContent>
-              </Card>
+            <div className="text-center py-12">
+              <Package className="h-24 w-24 text-gray-400 mx-auto mb-6" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Account Overview</h2>
+              <p className="text-gray-600 mb-8 text-lg">
+                View your recent orders and manage your account from the dedicated sections.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button onClick={() => window.location.href = '/orders'} size="lg">
+                  <Package className="h-4 w-4 mr-2" />
+                  View Orders
+                </Button>
+                <Button onClick={() => window.location.href = '/wishlist'} variant="outline" size="lg">
+                  <Heart className="h-4 w-4 mr-2" />
+                  View Wishlist
+                </Button>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
