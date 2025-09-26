@@ -14,6 +14,7 @@ const orderRoutes = require('./routes/orders');
 const aiRoutes = require('./routes/ai');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
+const mockPaymentRoutes = require('./routes/mockPayment');
 const webScraperRoutes = require('./routes/webScraper');
 
 const app = express();
@@ -70,6 +71,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/mock-payment', mockPaymentRoutes);
 app.use('/api/web-scraper', webScraperRoutes);
 
 // Health check endpoint
